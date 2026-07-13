@@ -14,10 +14,28 @@ import { CustomersModule } from './customers/customers.module';
 import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { RolesModule } from './roles/roles.module';
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [ProductsModule, UsersModule, AuthModule, MenuModule, InventoryModule, TableModule, OrdersModule, OrderItemsModule, ReservationsModule, PaymentsModule, StaffModule, CustomersModule, ReportsModule, SettingsModule, RolesModule],
+  imports: [ConfigModule.forRoot({
+    envFilePath: [`.env.stage.${process.env.STAGE}`]
+  }),
+  TypeOrmModule.forRootAsync({
+    imports: [ConfigModule],
+    inject: [ConfigService],
+    useFactory: async (configService: ConfigService) => ({
+      type: 'postgres',
+      autoLoadEntities: true,
+      synchronize: true,
+      host: configService.get('DB_HOST'),
+      port: configService.get('DB_PORT'),
+      username: configService.get('DB_USERNAME'),
+      password: configService.get('DB_PASSWORD'),
+      database: configService.get('DB_DATABASE')
+    })
+  }),ProductsModule, UsersModule, AuthModule, MenuModule, InventoryModule, TableModule, OrdersModule, OrderItemsModule, ReservationsModule, PaymentsModule, StaffModule, CustomersModule, ReportsModule, SettingsModule, RolesModule],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }
