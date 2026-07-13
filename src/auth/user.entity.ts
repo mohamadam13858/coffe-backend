@@ -14,15 +14,13 @@ export class User {
     @Column()
     password: string
     @Column({ type: 'enum', enum: Role })
-    role: Role
+    role: Role 
     @Column({ length: 100, nullable: true })
     firstName: string
     @Column({ length: 100, nullable: true })
     lastName: string
     @Column({ default: true })
     isActive: boolean
-    @Column({ default: false })
-    isVerified: boolean
     @CreateDateColumn()
     createdAt: Date
     @UpdateDateColumn()
