@@ -16,10 +16,12 @@ import { SettingsModule } from './settings/settings.module';
 import { RolesModule } from './roles/roles.module';
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { configValidationSchema } from './config.Schema';
 
 @Module({
   imports: [ConfigModule.forRoot({
-    envFilePath: [`.env.stage.${process.env.STAGE}`]
+    envFilePath: [`.env.stage.${process.env.STAGE}`], 
+    validationSchema: configValidationSchema
   }),
   TypeOrmModule.forRootAsync({
     imports: [ConfigModule],

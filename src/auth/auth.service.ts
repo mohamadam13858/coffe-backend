@@ -1,16 +1,20 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
-import { RegisterDto } from './dto/auth-credentials.dto';
+import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt'
 import { Role } from './role.enum';
+import { LoginDto } from './dto/login.dto';
+import { jwtPayload } from './jwt-payload-interface';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectRepository(User)
-        private readonly userRepository: Repository<User>
+        private readonly userRepository: Repository<User>,
+        private jwtService: JwtService
     ) { }
 
 
@@ -42,6 +46,21 @@ export class AuthService {
                 console.log(error)
                 throw new InternalServerErrorException()
             }
+        }
+    }
+
+
+
+    async login(loginDto: LoginDto): Promise<{ accessToken: string }> {
+        const { mobile, password } = loginDto
+        const user = await this.userRepository.findOne({ where: { mobile } })
+
+        if (user && (await bcrypt.compare(password, user.password))) {
+            const payload: jwtPayload = { id: user.id, mobile: user.mobile, role: user.role }
+            const accessToken: string = await this.jwtService.sign(payload)
+            return { accessToken }
+        } else {
+            throw new UnauthorizedException('رمز عبور یا موبایل اشتباه است لطفا مجدد تلاش کنید')
         }
     }
 }
