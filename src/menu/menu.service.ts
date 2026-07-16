@@ -1,10 +1,11 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 
 @Injectable()
@@ -57,8 +58,39 @@ export class MenuService {
         }
     }
 
-    async updateCategory() {
 
+
+
+    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto) {
+        const category = await this.categoryRepository.findOne({ where: { id } })
+
+        if (!category) {
+            throw new NotFoundException()
+        }
+
+        const allowedUpdates = {
+            name: updateCategoryDto.name,
+            description: updateCategoryDto.description,
+            imageUrl: updateCategoryDto.imageUrl,
+            orderIndex: updateCategoryDto.orderIndex,
+            isActive: updateCategoryDto.isActive
+        }
+
+        const cleanUpdates = Object.fromEntries(
+            Object.entries(allowedUpdates).filter(([_, value]) => value !== undefined)
+        )
+
+        if (Object.keys(cleanUpdates).length === 0) {
+            throw new BadRequestException('هیچ فیلدی برای بروزرسانی ارسال نشده است')
+        }
+        Object.assign(category, cleanUpdates)
+
+        try {
+            return await this.categoryRepository.save(category)
+            
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
     }
 
     async deleteCategory() { }
