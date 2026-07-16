@@ -8,6 +8,7 @@ import { GetUser } from 'src/auth/get-user.decorator';
 import { User } from 'src/auth/user.entity';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
+import { Category } from './entities/category.entity';
 
 @Controller('menu')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -16,8 +17,13 @@ export class MenuController {
 
     @Post('categories')
     @Roles('admin')
-    createCategory(@Body() createCategory:CreateCategoryDto){
+    createCategory(@Body() createCategory:CreateCategoryDto):Promise<Category>{
         return this.menuService.createCategory(createCategory)
+    }
+
+    @Get('categories')
+    getAllCategory(){
+        return this.menuService.getAllCategory()
     }
 
     @Get('products')

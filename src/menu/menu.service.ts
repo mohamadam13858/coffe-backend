@@ -16,7 +16,7 @@ export class MenuService {
         private categoryRepository: Repository<Category>
     ) { }
 
-    async createCategory(createCategoryDto: CreateCategoryDto) {
+    async createCategory(createCategoryDto: CreateCategoryDto): Promise<Category> {
         const { name, description, imageUrl, orderIndex } = createCategoryDto
 
         const existingCategory = await this.categoryRepository.findOne({ where: { name } })
@@ -34,7 +34,6 @@ export class MenuService {
 
         try {
             return await this.categoryRepository.save(category)
-
         } catch (error) {
             console.log(error)
             throw new InternalServerErrorException()
@@ -44,8 +43,18 @@ export class MenuService {
     }
 
 
-    async getAllCategory() {
-
+    async getAllCategory(): Promise<Category[]> {
+        try {
+            return await this.categoryRepository.find({
+                where: { isActive: true },
+                order: {
+                    orderIndex: 'ASC',
+                    createdAt: 'ASC'
+                }
+            })
+        } catch (error) {
+            throw new InternalServerErrorException
+        }
     }
 
     async updateCategory() {
