@@ -31,7 +31,7 @@ export class AuthService {
             email,
             firstName,
             lastName,
-            role: role || Role.CUSTOMER,
+            role: Role.CUSTOMER,
             password: hashedPassword
         })
 
@@ -41,7 +41,7 @@ export class AuthService {
 
         } catch (error) {
             if (error.code === '23505') {
-                throw new ConflictException('Username already exists')
+                throw new ConflictException('این شماره موبایل قبلا ثبت شده است')
             } else {
                 console.log(error)
                 throw new InternalServerErrorException()

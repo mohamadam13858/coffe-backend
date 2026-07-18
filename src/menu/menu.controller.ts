@@ -4,8 +4,6 @@ import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { Product } from './entities/product.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/auth/get-user.decorator';
-import { User } from 'src/auth/user.entity';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Category } from './entities/category.entity';
