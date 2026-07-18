@@ -81,11 +81,19 @@ export class MenuService {
             throw new NotFoundException()
         }
         const productCount = await this.productRepository.count({
-            where: { categoryId: id }
+            where: { category: { id } }
         })
 
         if (productCount > 0) {
-            throw new BadRequestException('')
+            throw new BadRequestException('لطفا قبل از حذف کردن دسته بندی  محصولات این دسته بندی را حذف کنید')
+        }
+
+        try {
+
+            await this.categoryRepository.softRemove(category)
+
+        } catch (error) {
+            throw new InternalServerErrorException()
         }
     }
 

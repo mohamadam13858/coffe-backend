@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { Product } from './entities/product.entity';
@@ -31,6 +31,12 @@ export class MenuController {
     @Patch('categories/:id')
     updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
         return this.menuService.updateCategory(id, updateCategoryDto)
+    }
+
+
+    @Delete('categories/:id')
+    deleteCategory(@Param('id') id: string) {
+        return this.menuService.deleteCategory(id)
     }
 
     @Get('products')
