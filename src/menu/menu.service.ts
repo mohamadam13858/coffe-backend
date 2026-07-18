@@ -62,38 +62,32 @@ export class MenuService {
 
 
     async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto) {
-        const category = await this.categoryRepository.findOne({ where: { id } })
-
+        const category = await this.categoryRepository.preload({
+            id,
+            ...updateCategoryDto
+        })
         if (!category) {
             throw new NotFoundException()
         }
-
-        const allowedUpdates = {
-            name: updateCategoryDto.name,
-            description: updateCategoryDto.description,
-            imageUrl: updateCategoryDto.imageUrl,
-            orderIndex: updateCategoryDto.orderIndex,
-            isActive: updateCategoryDto.isActive
-        }
-
-        const cleanUpdates = Object.fromEntries(
-            Object.entries(allowedUpdates).filter(([_, value]) => value !== undefined)
-        )
-
-        if (Object.keys(cleanUpdates).length === 0) {
-            throw new BadRequestException('هیچ فیلدی برای بروزرسانی ارسال نشده است')
-        }
-        Object.assign(category, cleanUpdates)
-
-        try {
-            return await this.categoryRepository.save(category)
-            
-        } catch (error) {
-            throw new InternalServerErrorException()
-        }
+        return await this.categoryRepository.save(category)
     }
 
-    async deleteCategory() { }
+
+
+
+    async deleteCategory(id: string) {
+        const category = await this.categoryRepository.findOne({ where: { id } })
+        if (!category) {
+            throw new NotFoundException()
+        }
+        const productCount = await this.productRepository.count({
+            where: { categoryId: id }
+        })
+
+        if (productCount > 0) {
+            throw new BadRequestException('')
+        }
+    }
 
 
     async getProducts(filterDto: GetProductsFilterDto): Promise<Product[]> {
