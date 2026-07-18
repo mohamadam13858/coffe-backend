@@ -8,6 +8,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Category } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CreateProductDto } from './dto/create-product.dto';
 
 @Controller('menu')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -42,6 +43,12 @@ export class MenuController {
     @Get('products')
     getAllProducts(@Query() filterDto: GetProductsFilterDto): Promise<Product[]> {
         return this.menuService.getProducts(filterDto)
+    }
+
+    @Post('product')
+    @Roles('admin')
+    createProduct(@Body() createProductDto: CreateProductDto) {
+        return this.menuService.createProduct(createProductDto)
     }
 
 }

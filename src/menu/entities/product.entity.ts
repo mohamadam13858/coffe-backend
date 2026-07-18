@@ -26,6 +26,8 @@ export class Product {
     @ManyToOne(() => Category, (category) => category.products, { nullable: true })
     @JoinColumn({ name: 'categoryId' })
     category: Category
+    @Column()
+    categoryId: string
     @Column({ default: true })
     isActive: boolean
     @CreateDateColumn()

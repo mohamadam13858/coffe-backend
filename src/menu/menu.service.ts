@@ -6,6 +6,7 @@ import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CreateProductDto } from './dto/create-product.dto';
 
 
 @Injectable()
@@ -125,7 +126,40 @@ export class MenuService {
     }
 
 
-    async createProduct() {
+    async createProduct(createProductDto: CreateProductDto) {
+        const { name, description, price, discountPrice, categoryId, imageUrl, stock, isAvailable } = createProductDto
+        const category = await this.categoryRepository.findOne({ where: { id: categoryId } })
+
+        if (!category) {
+            throw new NotFoundException('دسته بندی مورد نظر پیدا نشد')
+        }
+
+        const existing = await this.productRepository.findOne({ where: { name, category: { id: categoryId } } })
+
+        if (!existing) {
+            throw new ConflictException(`محصول ${name} قبلا در این دسته بندی  ثبت شده است `)
+        }
+
+
+        const product = this.productRepository.create({
+            name,
+            description,
+            price,
+            discountPrice,
+            categoryId,
+            imageUrl,
+            stock: stock || 0,
+            isAvailable: isAvailable ?? true,
+        })
+
+        try {
+
+            return await this.productRepository.save(product)
+
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
+
 
     }
 
