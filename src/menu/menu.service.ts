@@ -93,6 +93,7 @@ export class MenuService {
             await this.categoryRepository.softRemove(category)
 
         } catch (error) {
+            console.log(error)
             throw new InternalServerErrorException()
         }
     }

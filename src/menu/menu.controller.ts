@@ -29,12 +29,14 @@ export class MenuController {
 
 
     @Patch('categories/:id')
+    @Roles('admin')
     updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
         return this.menuService.updateCategory(id, updateCategoryDto)
     }
 
 
     @Delete('categories/:id')
+    @Roles('admin')
     deleteCategory(@Param('id') id: string) {
         return this.menuService.deleteCategory(id)
     }

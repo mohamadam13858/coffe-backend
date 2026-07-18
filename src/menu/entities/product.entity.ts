@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Category } from "./category.entity";
 
 
@@ -32,4 +32,6 @@ export class Product {
     createdAt: Date;
     @UpdateDateColumn()
     updatedAt: Date;
+    @DeleteDateColumn()
+    deletedAt: Date
 }

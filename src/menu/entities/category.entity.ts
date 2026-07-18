@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Product } from "./product.entity";
 import { User } from "src/auth/user.entity";
 
@@ -24,4 +24,6 @@ export class Category {
     createdAt: Date;
     @UpdateDateColumn()
     updatedAt: Date;
+    @DeleteDateColumn()
+    deletedAt: Date
 }
