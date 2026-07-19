@@ -164,23 +164,38 @@ export class MenuService {
 
     }
 
-    async updateProduct(id: string  , updateProductDto: UpdateProductDto ) {
-         const product = await this.productRepository.preload({
-            id , 
+    async updateProduct(id: string, updateProductDto: UpdateProductDto) {
+        const existingProduct = await this.productRepository.findOne({
+            where: { id }
+        })
+        if (!existingProduct) {
+            throw new NotFoundException(`محصول با شناسه ${id} یافت نشد `)
+        }
+
+        if (updateProductDto.categoryId) {
+            const existingCategory = await this.categoryRepository.findOne({
+                where: { id: updateProductDto.categoryId }
+            })
+            if (!existingCategory) {
+                throw new NotFoundException('دسته بندی مورد نظز یافت نشد')
+            }
+        }
+
+        const product = await this.productRepository.preload({
+            id,
             ...updateProductDto
-         })
+        })
 
-         if (!product) {
-            throw new NotFoundException()
-         }
+        if (!product) {
+            throw new BadRequestException('خطا در بروزرسانی محصول')
+        }
 
-         try {
 
-            return await this.productRepository.save(product)
-            
-         } catch (error) {
+        try {
+           return await this.productRepository.save(product)
+        } catch (error) {
             throw new InternalServerErrorException()
-         }
+        }
     }
 
     async deleteProduct() {
