@@ -7,6 +7,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 
 @Injectable()
@@ -163,8 +164,23 @@ export class MenuService {
 
     }
 
-    async updateProduct() {
+    async updateProduct(id: string  , updateProductDto: UpdateProductDto ) {
+         const product = await this.productRepository.preload({
+            id , 
+            ...updateProductDto
+         })
 
+         if (!product) {
+            throw new NotFoundException()
+         }
+
+         try {
+
+            return await this.productRepository.save(product)
+            
+         } catch (error) {
+            throw new InternalServerErrorException()
+         }
     }
 
     async deleteProduct() {

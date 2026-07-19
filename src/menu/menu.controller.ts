@@ -9,6 +9,7 @@ import { Roles } from 'src/auth/roles.decorator';
 import { Category } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('menu')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -49,6 +50,12 @@ export class MenuController {
     @Roles('admin')
     createProduct(@Body() createProductDto: CreateProductDto) {
         return this.menuService.createProduct(createProductDto)
+    }
+
+    @Patch('product/:id')
+    @Roles('admin')
+    updateProduct(@Param() id: string, @Body() updateProductDto: UpdateProductDto) {
+        return this.menuService.updateProduct(id, updateProductDto)
     }
 
 }
