@@ -136,7 +136,7 @@ export class MenuService {
 
         const existing = await this.productRepository.findOne({ where: { name, category: { id: categoryId } } })
 
-        if (!existing) {
+        if (existing) {
             throw new ConflictException(`محصول ${name} قبلا در این دسته بندی  ثبت شده است `)
         }
 
