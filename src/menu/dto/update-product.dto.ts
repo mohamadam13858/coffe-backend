@@ -19,8 +19,6 @@ export class UpdateProductDto {
     @IsUUID()
     categoryId: string
     @IsOptional()
-    imageUrl?: string
-    @IsOptional()
     @IsNumber()
     @Min(0)
     stock?: number

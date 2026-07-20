@@ -51,13 +51,14 @@ export class MenuController {
     @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
     createProduct(@Body() createProductDto: CreateProductDto, @UploadedFile() image: Express.Multer.File): Promise<Product> {
-        return this.menuService.createProduct(createProductDto , image)
+        return this.menuService.createProduct(createProductDto, image)
     }
 
     @Patch('product/:id')
+    @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
-    updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto): Promise<Product> {
-        return this.menuService.updateProduct(id, updateProductDto)
+    updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @UploadedFile() image: Express.Multer.File): Promise<Product> {
+        return this.menuService.updateProduct(id, updateProductDto , image)
     }
 
 

@@ -127,6 +127,10 @@ export class MenuService {
         }
 
     }
+
+
+
+
     async createProduct(createProductDto: CreateProductDto, image?: Express.Multer.File): Promise<Product> {
         const { name, description, price, discountPrice, categoryId, stock, isAvailable } = createProductDto;
 
@@ -175,7 +179,10 @@ export class MenuService {
         return await this.productRepository.save(product);
     }
 
-    async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+
+
+
+    async updateProduct(id: string, updateProductDto: UpdateProductDto, image: Express.Multer.File): Promise<Product> {
         const existingProduct = await this.productRepository.findOne({ where: { id } })
         if (!existingProduct) {
             throw new NotFoundException(`محصول با شناسه ${id} یافت نشد `)
@@ -190,9 +197,32 @@ export class MenuService {
             }
         }
 
+        let imageUrl = existingProduct.imageUrl
+
+        if (image) {
+            const uploadDir = './uploads/products'
+
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true })
+            }
+
+            if (existingProduct.imageUrl) {
+                const oldImagePath = path.join('.', existingProduct.imageUrl)
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath)
+                }
+            }
+            const fileName = `${Date.now()}-${image.originalname.replace(/\s+/g, '-')}`
+            const filePath = path.join(uploadDir, fileName)
+
+            fs.writeFileSync(filePath, image.buffer)
+            imageUrl = `/uploads/products/${fileName}`
+        }
+
         const product = await this.productRepository.preload({
             id,
-            ...updateProductDto
+            ...updateProductDto,
+            imageUrl
         })
 
         if (!product) {
