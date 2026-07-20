@@ -1,11 +1,13 @@
-import { IsBoolean, isNotEmpty, IsNotEmpty, IsNumber, IsOptional, IsUUID } from "class-validator";
+import { IsBoolean, isNotEmpty, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from "class-validator";
 
 
 
 export class UpdateProductDto {
     @IsOptional()
+    @IsString()
     name: string
     @IsOptional()
+    @IsString()
     description?: string
     @IsOptional()
     @IsNumber()
@@ -20,6 +22,7 @@ export class UpdateProductDto {
     imageUrl?: string
     @IsOptional()
     @IsNumber()
+    @Min(0)
     stock?: number
     @IsOptional()
     @IsBoolean()

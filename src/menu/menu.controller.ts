@@ -54,7 +54,7 @@ export class MenuController {
 
     @Patch('product/:id')
     @Roles('admin')
-    updateProduct(@Param() id: string, @Body() updateProductDto: UpdateProductDto) {
+    updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
         return this.menuService.updateProduct(id, updateProductDto)
     }
 

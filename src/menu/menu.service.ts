@@ -112,7 +112,7 @@ export class MenuService {
 
         if (search) {
             query.andWhere(
-                `(LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search))`,
+                `(LOWER(product.name) LIKE LOWER(:search) OR LOWER(product.description) LIKE LOWER(:search))`,
                 { search: `%${search}%` }
             )
         }
@@ -165,9 +165,7 @@ export class MenuService {
     }
 
     async updateProduct(id: string, updateProductDto: UpdateProductDto) {
-        const existingProduct = await this.productRepository.findOne({
-            where: { id }
-        })
+        const existingProduct = await this.productRepository.findOne({ where: { id } })
         if (!existingProduct) {
             throw new NotFoundException(`محصول با شناسه ${id} یافت نشد `)
         }
@@ -192,7 +190,7 @@ export class MenuService {
 
 
         try {
-           return await this.productRepository.save(product)
+            return await this.productRepository.save(product)
         } catch (error) {
             throw new InternalServerErrorException()
         }
