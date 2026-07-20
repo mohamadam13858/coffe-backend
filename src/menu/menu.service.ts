@@ -85,6 +85,21 @@ export class MenuService {
 
     async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto, image?: Express.Multer.File): Promise<Category> {
         const existingCategory = await this.categoryRepository.findOne({ where: { id } })
+        if (!existingCategory) {
+            throw new NotFoundException()
+        }
+
+        if (updateCategoryDto.name && updateCategoryDto.name !== existingCategory.name) {
+            const duplicateCategory = await this.categoryRepository.findOne({
+                where: { name: updateCategoryDto.name }
+            });
+
+            if (duplicateCategory) {
+                throw new ConflictException(
+                    `دسته‌بندی با نام "${updateCategoryDto.name}" وجود دارد`
+                );
+            }
+        }
         let imageUrl: string | undefined
 
         if (image) {
