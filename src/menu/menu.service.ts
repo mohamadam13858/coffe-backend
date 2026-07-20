@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { DeepPartial, Repository } from 'typeorm';
+import { DataSource, DeepPartial, Repository } from 'typeorm';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
@@ -10,6 +10,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 
 @Injectable()
@@ -18,7 +19,8 @@ export class MenuService {
         @InjectRepository(Product)
         private productRepository: Repository<Product>,
         @InjectRepository(Category)
-        private categoryRepository: Repository<Category>
+        private categoryRepository: Repository<Category>,
+        private dataSource: DataSource
     ) { }
 
     async createCategory(createCategoryDto: CreateCategoryDto, image?: Express.Multer.File): Promise<Category> {
@@ -83,55 +85,61 @@ export class MenuService {
 
 
 
-    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto, image?: Express.Multer.File): Promise<Category> {
-        const existingCategory = await this.categoryRepository.findOne({ where: { id } })
-        if (!existingCategory) {
-            throw new NotFoundException()
-        }
+    async updateCategory(
+        id: string,
+        updateCategoryDto: UpdateCategoryDto,
+        image?: Express.Multer.File
+    ): Promise<Category> {
+        let newImagePath: string | undefined;
 
-        if (updateCategoryDto.name && updateCategoryDto.name !== existingCategory.name) {
-            const duplicateCategory = await this.categoryRepository.findOne({
-                where: { name: updateCategoryDto.name }
-            });
-
-            if (duplicateCategory) {
-                throw new ConflictException(
-                    `دسته‌بندی با نام "${updateCategoryDto.name}" وجود دارد`
-                );
+        return await this.dataSource.transaction(async (manager) => {
+            const existing = await manager.findOne(Category, { where: { id } });
+            if (!existing) {
+                throw new NotFoundException(`دسته‌بندی با شناسه ${id} پیدا نشد`);
             }
-        }
-        let imageUrl: string | undefined
 
-        if (image) {
-            const uploadDir = `./uploads/categories`
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true })
-            }
-            if (existingCategory?.imageUrl) {
-                const oldImagePath = path.join(`.`, existingCategory.imageUrl)
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath)
+            if (updateCategoryDto.name && updateCategoryDto.name !== existing.name) {
+                const duplicate = await manager.findOne(Category, {
+                    where: { name: updateCategoryDto.name }
+                });
+                if (duplicate) {
+                    throw new ConflictException(`دسته‌بندی با نام "${updateCategoryDto.name}" قبلاً وجود دارد`);
                 }
             }
-            const fileName = `${Date.now()}-${image.originalname.replace(/\s+/g, '-')}`
-            const filePath = path.join(uploadDir, fileName)
 
-            fs.writeFileSync(filePath, image.buffer)
-            imageUrl = `/uploads/categories/${fileName}`
-        }
+            let imageUrl = existing.imageUrl;
 
+            if (image) {
+                const uploadDir = path.join(process.cwd(), 'uploads', 'categories');
+                await fs.promises.mkdir(uploadDir, { recursive: true });
 
-        const category = await this.categoryRepository.preload({
-            id,
-            ...updateCategoryDto,
-            imageUrl
-        })
-        if (!category) {
-            throw new NotFoundException()
-        }
-        return await this.categoryRepository.save(category)
+                if (existing.imageUrl) {
+                    const oldPath = path.join(process.cwd(), existing.imageUrl);
+                    try {
+                        await fs.promises.unlink(oldPath);
+                    } catch (err) {
+                        console.log(err)
+                        // this.logger.warn(`Failed to delete old image: ${oldPath}`);
+                    }
+                }
+
+                const ext = path.extname(image.originalname);
+                const fileName = `${Date.now()}-${uuidv4()}${ext}`;
+                newImagePath = path.join(uploadDir, fileName);
+
+                await fs.promises.writeFile(newImagePath, image.buffer);
+                imageUrl = `/uploads/categories/${fileName}`;
+            }
+
+            const category = await manager.save(Category, {
+                id,
+                ...updateCategoryDto,
+                imageUrl
+            });
+
+            return category;
+        });
     }
-
 
 
 

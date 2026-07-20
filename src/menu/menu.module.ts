@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Category } from './entities/category.entity';
 import { PassportModule } from '@nestjs/passport';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, Category]) , PassportModule],
+  imports: [TypeOrmModule.forFeature([Product, Category]), MulterModule.register({ dest: './uploads', }), PassportModule],
   controllers: [MenuController],
   providers: [MenuService],
   exports: [MenuService]
