@@ -103,7 +103,7 @@ export class MenuService {
 
     async getProducts(filterDto: GetProductsFilterDto): Promise<Product[]> {
         const { search, categoryId } = filterDto
-        const query = this.productRepository.createQueryBuilder('product').leftJoinAndSelect('product.category', 'category')
+        const query = this.productRepository.createQueryBuilder('product')
 
 
         if (categoryId) {
