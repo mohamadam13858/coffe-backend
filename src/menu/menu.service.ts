@@ -63,7 +63,7 @@ export class MenuService {
 
 
 
-    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto) {
+    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto):Promise<Category> {
         const category = await this.categoryRepository.preload({
             id,
             ...updateCategoryDto
@@ -77,7 +77,7 @@ export class MenuService {
 
 
 
-    async deleteCategory(id: string) {
+    async deleteCategory(id: string):Promise<void> {
         const category = await this.categoryRepository.findOne({ where: { id } })
         if (!category) {
             throw new NotFoundException()
@@ -127,7 +127,7 @@ export class MenuService {
     }
 
 
-    async createProduct(createProductDto: CreateProductDto) {
+    async createProduct(createProductDto: CreateProductDto):Promise<Product> {
         const { name, description, price, discountPrice, categoryId, imageUrl, stock, isAvailable } = createProductDto
         const category = await this.categoryRepository.findOne({ where: { id: categoryId } })
 
@@ -164,7 +164,7 @@ export class MenuService {
 
     }
 
-    async updateProduct(id: string, updateProductDto: UpdateProductDto) {
+    async updateProduct(id: string, updateProductDto: UpdateProductDto):Promise<Product> {
         const existingProduct = await this.productRepository.findOne({ where: { id } })
         if (!existingProduct) {
             throw new NotFoundException(`محصول با شناسه ${id} یافت نشد `)
@@ -196,8 +196,18 @@ export class MenuService {
         }
     }
 
-    async deleteProduct() {
+    async deleteProduct(id: string): Promise<void> {
+        const product = await this.productRepository.findOne({ where: { id } })
 
+        if (!product) {
+            throw new NotFoundException('محصول مورد نظر پیدا نشد')
+        }
+
+        try {
+            await this.productRepository.softRemove(product)
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
     }
 
 

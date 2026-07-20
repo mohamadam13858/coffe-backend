@@ -23,21 +23,21 @@ export class MenuController {
     }
 
     @Get('categories')
-    getAllCategory() {
+    getAllCategory(): Promise<Category[]> {
         return this.menuService.getAllCategory()
     }
 
 
     @Patch('categories/:id')
     @Roles('admin')
-    updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+    updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto): Promise<Category> {
         return this.menuService.updateCategory(id, updateCategoryDto)
     }
 
 
     @Delete('categories/:id')
     @Roles('admin')
-    deleteCategory(@Param('id') id: string) {
+    deleteCategory(@Param('id') id: string): Promise<void> {
         return this.menuService.deleteCategory(id)
     }
 
@@ -48,14 +48,21 @@ export class MenuController {
 
     @Post('product')
     @Roles('admin')
-    createProduct(@Body() createProductDto: CreateProductDto) {
+    createProduct(@Body() createProductDto: CreateProductDto): Promise<Product> {
         return this.menuService.createProduct(createProductDto)
     }
 
     @Patch('product/:id')
     @Roles('admin')
-    updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
+    updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto): Promise<Product> {
         return this.menuService.updateProduct(id, updateProductDto)
+    }
+
+
+    @Delete('product/:id')
+    @Roles('admin')
+    deleteProduct(@Param('id') id: string): Promise<void> {
+        return this.menuService.deleteProduct(id)
     }
 
 }
