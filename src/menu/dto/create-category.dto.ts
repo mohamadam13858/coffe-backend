@@ -6,8 +6,6 @@ export class CreateCategoryDto {
     @IsOptional()
     description: string
     @IsOptional()
-    imageUrl: string
-    @IsOptional()
     @IsNumber()
     orderIndex: number
 }

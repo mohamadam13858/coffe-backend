@@ -18,9 +18,10 @@ export class MenuController {
     constructor(private menuService: MenuService) { }
 
     @Post('categories')
+    @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
-    createCategory(@Body() createCategory: CreateCategoryDto): Promise<Category> {
-        return this.menuService.createCategory(createCategory)
+    createCategory(@Body() createCategory: CreateCategoryDto, @UploadedFile() image: Express.Multer.File): Promise<Category> {
+        return this.menuService.createCategory(createCategory, image)
     }
 
     @Get('categories')
@@ -58,7 +59,7 @@ export class MenuController {
     @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
     updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @UploadedFile() image: Express.Multer.File): Promise<Product> {
-        return this.menuService.updateProduct(id, updateProductDto , image)
+        return this.menuService.updateProduct(id, updateProductDto, image)
     }
 
 

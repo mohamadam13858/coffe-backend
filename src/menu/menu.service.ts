@@ -21,13 +21,31 @@ export class MenuService {
         private categoryRepository: Repository<Category>
     ) { }
 
-    async createCategory(createCategoryDto: CreateCategoryDto): Promise<Category> {
-        const { name, description, imageUrl, orderIndex } = createCategoryDto
+    async createCategory(createCategoryDto: CreateCategoryDto, image?: Express.Multer.File): Promise<Category> {
+        const { name, description, orderIndex } = createCategoryDto
 
         const existingCategory = await this.categoryRepository.findOne({ where: { name } })
         if (existingCategory) {
             throw new ConflictException(`دسته بندی با نام ${name} وجود دارد لطفا نام دیگری انتخاب کنید`)
         }
+
+
+        let imageUrl: string | undefined
+
+        if (image) {
+            const uploadDir = './uploads/categories';
+
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            const fileName = `${Date.now()}-${image.originalname.replace(/\s+/g, '-')}`;
+            const filePath = path.join(uploadDir, fileName);
+
+            fs.writeFileSync(filePath, image.buffer);
+            imageUrl = `/uploads/categories/${fileName}`;
+        }
+
 
         const category = this.categoryRepository.create({
             name,
@@ -35,7 +53,7 @@ export class MenuService {
             imageUrl,
             orderIndex: orderIndex || 0,
             isActive: true
-        })
+        } as DeepPartial<Category>)
 
         try {
             return await this.categoryRepository.save(category)
@@ -236,6 +254,8 @@ export class MenuService {
             throw new InternalServerErrorException()
         }
     }
+
+
 
     async deleteProduct(id: string): Promise<void> {
         const product = await this.productRepository.findOne({ where: { id } })
