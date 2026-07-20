@@ -1,13 +1,15 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 
 @Injectable()
@@ -63,7 +65,7 @@ export class MenuService {
 
 
 
-    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto):Promise<Category> {
+    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
         const category = await this.categoryRepository.preload({
             id,
             ...updateCategoryDto
@@ -77,7 +79,7 @@ export class MenuService {
 
 
 
-    async deleteCategory(id: string):Promise<void> {
+    async deleteCategory(id: string): Promise<void> {
         const category = await this.categoryRepository.findOne({ where: { id } })
         if (!category) {
             throw new NotFoundException()
@@ -125,22 +127,38 @@ export class MenuService {
         }
 
     }
+    async createProduct(createProductDto: CreateProductDto, image?: Express.Multer.File): Promise<Product> {
+        const { name, description, price, discountPrice, categoryId, stock, isAvailable } = createProductDto;
 
-
-    async createProduct(createProductDto: CreateProductDto):Promise<Product> {
-        const { name, description, price, discountPrice, categoryId, imageUrl, stock, isAvailable } = createProductDto
-        const category = await this.categoryRepository.findOne({ where: { id: categoryId } })
-
+        const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
         if (!category) {
-            throw new NotFoundException('دسته بندی مورد نظر پیدا نشد')
+            throw new NotFoundException('دسته‌بندی مورد نظر پیدا نشد');
         }
 
-        const existing = await this.productRepository.findOne({ where: { name, category: { id: categoryId } } })
-
+        const existing = await this.productRepository.findOne({
+            where: { name, category: { id: categoryId } }
+        });
         if (existing) {
-            throw new ConflictException(`محصول ${name} قبلا در این دسته بندی  ثبت شده است `)
+            throw new ConflictException(`محصول "${name}" قبلاً در این دسته‌بندی ثبت شده است`);
         }
 
+        let imageUrl: string | undefined = undefined;
+
+
+        if (image) {
+            const uploadDir = './uploads/products';
+
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            const fileName = `${Date.now()}-${image.originalname}`;
+            const filePath = path.join(uploadDir, fileName);
+
+            fs.writeFileSync(filePath, image.buffer);
+
+            imageUrl = `/uploads/products/${fileName}`;
+        }
 
         const product = this.productRepository.create({
             name,
@@ -151,20 +169,13 @@ export class MenuService {
             imageUrl,
             stock: stock || 0,
             isAvailable: isAvailable ?? true,
-        })
+            orderCount: 0,
+        } as DeepPartial<Product>);
 
-        try {
-
-            return await this.productRepository.save(product)
-
-        } catch (error) {
-            throw new InternalServerErrorException()
-        }
-
-
+        return await this.productRepository.save(product);
     }
 
-    async updateProduct(id: string, updateProductDto: UpdateProductDto):Promise<Product> {
+    async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
         const existingProduct = await this.productRepository.findOne({ where: { id } })
         if (!existingProduct) {
             throw new NotFoundException(`محصول با شناسه ${id} یافت نشد `)

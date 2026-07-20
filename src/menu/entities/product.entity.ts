@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Category } from "./category.entity";
+import { Category } from "./category.entity"
+import { Express } from 'express';;
 
 
 
@@ -17,8 +18,6 @@ export class Product {
     discountPrice?: number
     @Column({ default: true })
     isAvailable: boolean
-    @Column({ nullable: true })
-    imageUrl?: string
     @Column({ default: 0 })
     stock: number
     @Column({ default: 0 })
@@ -28,6 +27,8 @@ export class Product {
     category: Category
     @Column()
     categoryId: string
+    @Column({ nullable: true })
+    imageUrl: string
     @Column({ default: true })
     isActive: boolean
     @CreateDateColumn()

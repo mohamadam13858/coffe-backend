@@ -17,8 +17,6 @@ export class CreateProductDto {
     @IsUUID()
     categoryId: string
     @IsOptional()
-    imageUrl?: string
-    @IsOptional()
     @IsNumber()
     stock?: number
     @IsOptional()

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { Product } from './entities/product.entity';
@@ -10,6 +10,7 @@ import { Category } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('menu')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -47,9 +48,10 @@ export class MenuController {
     }
 
     @Post('product')
+    @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
-    createProduct(@Body() createProductDto: CreateProductDto): Promise<Product> {
-        return this.menuService.createProduct(createProductDto)
+    createProduct(@Body() createProductDto: CreateProductDto, @UploadedFile() image: Express.Multer.File): Promise<Product> {
+        return this.menuService.createProduct(createProductDto , image)
     }
 
     @Patch('product/:id')
