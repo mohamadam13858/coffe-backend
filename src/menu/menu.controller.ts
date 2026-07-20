@@ -20,7 +20,7 @@ export class MenuController {
     @Post('categories')
     @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
-    createCategory(@Body() createCategory: CreateCategoryDto, @UploadedFile() image: Express.Multer.File): Promise<Category> {
+    createCategory(@Body() createCategory: CreateCategoryDto, @UploadedFile() image?: Express.Multer.File): Promise<Category> {
         return this.menuService.createCategory(createCategory, image)
     }
 
@@ -31,9 +31,10 @@ export class MenuController {
 
 
     @Patch('categories/:id')
+     @UseInterceptors(FileInterceptor('image'))
     @Roles('admin')
-    updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto): Promise<Category> {
-        return this.menuService.updateCategory(id, updateCategoryDto)
+    updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto , @UploadedFile() image?: Express.Multer.File): Promise<Category> {
+        return this.menuService.updateCategory(id, updateCategoryDto , image)
     }
 
 

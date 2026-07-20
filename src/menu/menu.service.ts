@@ -83,10 +83,33 @@ export class MenuService {
 
 
 
-    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+    async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto, image?: Express.Multer.File): Promise<Category> {
+        const existingCategory = await this.categoryRepository.findOne({ where: { id } })
+        let imageUrl: string | undefined
+
+        if (image) {
+            const uploadDir = `./uploads/categories`
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true })
+            }
+            if (existingCategory?.imageUrl) {
+                const oldImagePath = path.join(`.`, existingCategory.imageUrl)
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath)
+                }
+            }
+            const fileName = `${Date.now()}-${image.originalname.replace(/\s+/g, '-')}`
+            const filePath = path.join(uploadDir, fileName)
+
+            fs.writeFileSync(filePath, image.buffer)
+            imageUrl = `/uploads/categories/${fileName}`
+        }
+
+
         const category = await this.categoryRepository.preload({
             id,
-            ...updateCategoryDto
+            ...updateCategoryDto,
+            imageUrl
         })
         if (!category) {
             throw new NotFoundException()

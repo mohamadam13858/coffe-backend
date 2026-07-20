@@ -8,9 +8,6 @@ export class UpdateCategoryDto {
   description?: string;
 
   @IsOptional()
-  imageUrl?: string;
-
-  @IsOptional()
   @IsNumber()
   orderIndex?: number;
 
