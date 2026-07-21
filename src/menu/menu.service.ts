@@ -11,7 +11,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-
+import {join} from 'path'
 
 @Injectable()
 export class MenuService {
@@ -85,61 +85,63 @@ export class MenuService {
 
 
 
-    async updateCategory(
-        id: string,
-        updateCategoryDto: UpdateCategoryDto,
-        image?: Express.Multer.File
-    ): Promise<Category> {
-        let newImagePath: string | undefined;
+async updateCategory(
+    id: string,
+    updateCategoryDto: UpdateCategoryDto,
+    image?: Express.Multer.File
+): Promise<Category> {
+    console.log(image)
+    const imageBuffer = image?.buffer;
+    const imageOriginalname = image?.originalname;
+    
+    return await this.dataSource.transaction(async (manager) => {
+        const existing = await manager.findOne(Category, { where: { id } });
+        if (!existing) {
+            throw new NotFoundException(`دسته‌بندی با شناسه ${id} پیدا نشد`);
+        }
 
-        return await this.dataSource.transaction(async (manager) => {
-            const existing = await manager.findOne(Category, { where: { id } });
-            if (!existing) {
-                throw new NotFoundException(`دسته‌بندی با شناسه ${id} پیدا نشد`);
-            }
-
-            if (updateCategoryDto.name && updateCategoryDto.name !== existing.name) {
-                const duplicate = await manager.findOne(Category, {
-                    where: { name: updateCategoryDto.name }
-                });
-                if (duplicate) {
-                    throw new ConflictException(`دسته‌بندی با نام "${updateCategoryDto.name}" قبلاً وجود دارد`);
-                }
-            }
-
-            let imageUrl = existing.imageUrl;
-
-            if (image) {
-                const uploadDir = path.join(process.cwd(), 'uploads', 'categories');
-                await fs.promises.mkdir(uploadDir, { recursive: true });
-
-                if (existing.imageUrl) {
-                    const oldPath = path.join(process.cwd(), existing.imageUrl);
-                    try {
-                        await fs.promises.unlink(oldPath);
-                    } catch (err) {
-                        console.log(err)
-                        // this.logger.warn(`Failed to delete old image: ${oldPath}`);
-                    }
-                }
-
-                const ext = path.extname(image.originalname);
-                const fileName = `${Date.now()}-${uuidv4()}${ext}`;
-                newImagePath = path.join(uploadDir, fileName);
-
-                await fs.promises.writeFile(newImagePath, image.buffer);
-                imageUrl = `/uploads/categories/${fileName}`;
-            }
-
-            const category = await manager.save(Category, {
-                id,
-                ...updateCategoryDto,
-                imageUrl
+        if (updateCategoryDto.name && updateCategoryDto.name !== existing.name) {
+            const duplicate = await manager.findOne(Category, {
+                where: { name: updateCategoryDto.name }
             });
+            if (duplicate) {
+                throw new ConflictException(`دسته‌بندی با نام "${updateCategoryDto.name}" قبلاً وجود دارد`);
+            }
+        }
 
-            return category;
+        let imageUrl = existing.imageUrl;
+
+        console.log(imageBuffer , 'kjfkjdsjosjnojoij')
+
+        if (imageBuffer) {
+           const uploadDir = join(process.cwd() , 'uploads', 'categories');
+           console.log(uploadDir , 'jjjjjjj')
+            await fs.promises.mkdir(uploadDir, { recursive: true });
+
+            if (existing.imageUrl) {
+                const oldPath = path.join(process.cwd(), existing.imageUrl);
+                try {
+                    await fs.promises.unlink(oldPath);
+                } catch (err) {}
+            }
+
+            const ext = path.extname(imageOriginalname || '');
+            const fileName = `${Date.now()}-${uuidv4()}${ext}`;
+            const newImagePath = path.join(uploadDir, fileName);
+
+            await fs.promises.writeFile(newImagePath, imageBuffer);
+            imageUrl = `/uploads/categories/${fileName}`;
+        }
+
+        const category = await manager.save(Category, {
+            id,
+            ...updateCategoryDto,
+            imageUrl
         });
-    }
+
+        return category;
+    });
+}
 
 
 

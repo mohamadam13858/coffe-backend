@@ -8,7 +8,10 @@ import { PassportModule } from '@nestjs/passport';
 import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, Category]), MulterModule.register({ dest: './uploads', }), PassportModule],
+  imports: [TypeOrmModule.forFeature([Product, Category]), MulterModule.register({
+    dest: './uploads',
+    limits: { fileSize: 5 * 1024 * 1024 }
+  }) , PassportModule],
   controllers: [MenuController],
   providers: [MenuService],
   exports: [MenuService]

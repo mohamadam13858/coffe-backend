@@ -11,6 +11,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @Controller('menu')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -31,10 +32,16 @@ export class MenuController {
 
 
     @Patch('categories/:id')
-     @UseInterceptors(FileInterceptor('image'))
+    @UseInterceptors(FileInterceptor('image', {
+        storage: memoryStorage(),
+        limits: {
+            fileSize: 5 * 1024 * 1024
+        }
+    }))
     @Roles('admin')
-    updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto , @UploadedFile() image?: Express.Multer.File): Promise<Category> {
-        return this.menuService.updateCategory(id, updateCategoryDto , image)
+    updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto, @UploadedFile() image?: Express.Multer.File): Promise<Category> {
+        console.log('Received image:', image ? 'Yes' : 'No');
+        return this.menuService.updateCategory(id, updateCategoryDto, image)
     }
 
 
