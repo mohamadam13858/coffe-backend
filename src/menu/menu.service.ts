@@ -11,7 +11,8 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import {join} from 'path'
+import { join } from 'path'
+
 
 @Injectable()
 export class MenuService {
@@ -85,63 +86,65 @@ export class MenuService {
 
 
 
-async updateCategory(
-    id: string,
-    updateCategoryDto: UpdateCategoryDto,
-    image?: Express.Multer.File
-): Promise<Category> {
-    console.log(image)
-    const imageBuffer = image?.buffer;
-    const imageOriginalname = image?.originalname;
-    
-    return await this.dataSource.transaction(async (manager) => {
-        const existing = await manager.findOne(Category, { where: { id } });
-        if (!existing) {
-            throw new NotFoundException(`دسته‌بندی با شناسه ${id} پیدا نشد`);
-        }
+    async updateCategory(
+        id: string,
+        updateCategoryDto: UpdateCategoryDto,
+        image?: Express.Multer.File
+    ): Promise<Category> {
 
-        if (updateCategoryDto.name && updateCategoryDto.name !== existing.name) {
-            const duplicate = await manager.findOne(Category, {
-                where: { name: updateCategoryDto.name }
+
+        return await this.dataSource.transaction(async (manager) => {
+            const existing = await manager.findOne(Category, { where: { id } });
+            if (!existing) {
+                throw new NotFoundException(`دسته‌بندی با شناسه ${id} پیدا نشد`);
+            }
+
+            if (updateCategoryDto.name && updateCategoryDto.name !== existing.name) {
+                const duplicate = await manager.findOne(Category, {
+                    where: { name: updateCategoryDto.name }
+                });
+                if (duplicate) {
+                    throw new ConflictException(`دسته‌بندی با نام "${updateCategoryDto.name}" قبلاً وجود دارد`);
+                }
+            }
+
+            let imageUrl = existing.imageUrl;
+            let oldFilePath: string | null = null
+
+
+            if (image?.buffer) {
+                const uploadDir = join(process.cwd(), 'uploads', 'categories');
+                await fs.promises.mkdir(uploadDir, { recursive: true });
+
+                const ext = path.extname(image?.originalname || '');
+                const fileName = `${Date.now()}-${uuidv4()}${ext}`;
+                const newImagePath = path.join(uploadDir, fileName);
+
+                await fs.promises.writeFile(newImagePath, image?.buffer);
+                imageUrl = `/uploads/categories/${fileName}`;
+                
+                if (existing.imageUrl) {
+                    oldFilePath = path.join(process.cwd(), existing.imageUrl)
+                }
+
+            }
+
+            const updatedCategory = await manager.merge(Category, existing, {
+                id,
+                ...updateCategoryDto,
+                imageUrl
             });
-            if (duplicate) {
-                throw new ConflictException(`دسته‌بندی با نام "${updateCategoryDto.name}" قبلاً وجود دارد`);
-            }
-        }
 
-        let imageUrl = existing.imageUrl;
 
-        console.log(imageBuffer , 'kjfkjdsjosjnojoij')
+            const savedCategory = await manager.save(updatedCategory)
 
-        if (imageBuffer) {
-           const uploadDir = join(process.cwd() , 'uploads', 'categories');
-           console.log(uploadDir , 'jjjjjjj')
-            await fs.promises.mkdir(uploadDir, { recursive: true });
-
-            if (existing.imageUrl) {
-                const oldPath = path.join(process.cwd(), existing.imageUrl);
-                try {
-                    await fs.promises.unlink(oldPath);
-                } catch (err) {}
+            if (oldFilePath) {
+                this.safeUnlink(oldFilePath)
             }
 
-            const ext = path.extname(imageOriginalname || '');
-            const fileName = `${Date.now()}-${uuidv4()}${ext}`;
-            const newImagePath = path.join(uploadDir, fileName);
-
-            await fs.promises.writeFile(newImagePath, imageBuffer);
-            imageUrl = `/uploads/categories/${fileName}`;
-        }
-
-        const category = await manager.save(Category, {
-            id,
-            ...updateCategoryDto,
-            imageUrl
+            return savedCategory;
         });
-
-        return category;
-    });
-}
+    }
 
 
 
@@ -248,59 +251,54 @@ async updateCategory(
 
 
 
-    async updateProduct(id: string, updateProductDto: UpdateProductDto, image: Express.Multer.File): Promise<Product> {
-        const existingProduct = await this.productRepository.findOne({ where: { id } })
-        if (!existingProduct) {
-            throw new NotFoundException(`محصول با شناسه ${id} یافت نشد `)
-        }
-
-        if (updateProductDto.categoryId) {
-            const existingCategory = await this.categoryRepository.findOne({
-                where: { id: updateProductDto.categoryId }
-            })
-            if (!existingCategory) {
-                throw new NotFoundException('دسته بندی مورد نظز یافت نشد')
+    async updateProduct(id: string, updateProductDto: UpdateProductDto, image?: Express.Multer.File): Promise<Product> {
+        return await this.dataSource.transaction(async (manager) => {
+            const existing = await manager.findOne(Product, { where: { id } })
+            if (!existing) {
+                throw new NotFoundException('محصول یافت نشد')
             }
-        }
-
-        let imageUrl = existingProduct.imageUrl
-
-        if (image) {
-            const uploadDir = './uploads/products'
-
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true })
-            }
-
-            if (existingProduct.imageUrl) {
-                const oldImagePath = path.join('.', existingProduct.imageUrl)
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath)
+            if (updateProductDto.categoryId) {
+                const existingCategory = await manager.findOne(Category, { where: { id: updateProductDto.categoryId } })
+                if (!existingCategory) {
+                    throw new NotFoundException('دسته بندی مورد نظر یافت نشد')
                 }
             }
-            const fileName = `${Date.now()}-${image.originalname.replace(/\s+/g, '-')}`
-            const filePath = path.join(uploadDir, fileName)
 
-            fs.writeFileSync(filePath, image.buffer)
-            imageUrl = `/uploads/products/${fileName}`
-        }
+            let imageUrl = existing.imageUrl
+            let oldFilePath: string | null = null
 
-        const product = await this.productRepository.preload({
-            id,
-            ...updateProductDto,
-            imageUrl
+            if (image) {
+                const uploadDir = join(process.cwd(), 'uploads', 'products')
+                await fs.promises.mkdir(uploadDir, { recursive: true })
+
+                const ext = path.extname(image?.originalname)
+                const fileName = `${Date.now()}-${uuidv4()}${ext}`
+                const newImagePath = path.join(uploadDir, fileName)
+
+                await fs.promises.writeFile(newImagePath, image?.buffer)
+                imageUrl = `/uploads/products/${fileName}`
+
+                if (existing.imageUrl) {
+                    oldFilePath = path.join(process.cwd(), existing.imageUrl)
+                }
+            }
+
+            const updatedProduct = await manager.merge(Product, existing, {
+                id,
+                ...updateProductDto,
+                imageUrl
+            })
+
+            const savedProduct = await manager.save(updatedProduct)
+
+            if (oldFilePath) {
+                this.safeUnlink(oldFilePath)
+            }
+
+
+            return savedProduct
+
         })
-
-        if (!product) {
-            throw new BadRequestException('خطا در بروزرسانی محصول')
-        }
-
-
-        try {
-            return await this.productRepository.save(product)
-        } catch (error) {
-            throw new InternalServerErrorException()
-        }
     }
 
 
@@ -316,6 +314,16 @@ async updateCategory(
             await this.productRepository.softRemove(product)
         } catch (error) {
             throw new InternalServerErrorException()
+        }
+    }
+
+
+
+    private async safeUnlink(filePath) {
+        try {
+            await fs.promises.unlink(filePath)
+        } catch (error) {
+            console.error(`Failed to delete old file: ${filePath}`, error);
         }
     }
 

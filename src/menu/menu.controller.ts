@@ -40,7 +40,6 @@ export class MenuController {
     }))
     @Roles('admin')
     updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto, @UploadedFile() image?: Express.Multer.File): Promise<Category> {
-        console.log('Received image:', image ? 'Yes' : 'No');
         return this.menuService.updateCategory(id, updateCategoryDto, image)
     }
 
@@ -64,7 +63,12 @@ export class MenuController {
     }
 
     @Patch('product/:id')
-    @UseInterceptors(FileInterceptor('image'))
+    @UseInterceptors(FileInterceptor('image', {
+        storage: memoryStorage(),
+        limits: {
+            fileSize: 5 * 1024 * 1024
+        }
+    }))
     @Roles('admin')
     updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @UploadedFile() image: Express.Multer.File): Promise<Product> {
         return this.menuService.updateProduct(id, updateProductDto, image)
