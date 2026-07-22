@@ -122,7 +122,7 @@ export class MenuService {
 
                 await fs.promises.writeFile(newImagePath, image?.buffer);
                 imageUrl = `/uploads/categories/${fileName}`;
-                
+
                 if (existing.imageUrl) {
                     oldFilePath = path.join(process.cwd(), existing.imageUrl)
                 }
@@ -201,51 +201,50 @@ export class MenuService {
 
 
     async createProduct(createProductDto: CreateProductDto, image?: Express.Multer.File): Promise<Product> {
-        const { name, description, price, discountPrice, categoryId, stock, isAvailable } = createProductDto;
 
-        const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
-        if (!category) {
-            throw new NotFoundException('دسته‌بندی مورد نظر پیدا نشد');
-        }
+        return await this.dataSource.transaction(async (manager) => {
+            const { name, description, price, discountPrice, categoryId, stock, isAvailable } = createProductDto;
 
-        const existing = await this.productRepository.findOne({
-            where: { name, category: { id: categoryId } }
-        });
-        if (existing) {
-            throw new ConflictException(`محصول "${name}" قبلاً در این دسته‌بندی ثبت شده است`);
-        }
-
-        let imageUrl: string | undefined = undefined;
-
-
-        if (image) {
-            const uploadDir = './uploads/products';
-
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
+            const category = await manager.findOne(Category, { where: { id: categoryId } });
+            if (!category) {
+                throw new NotFoundException('دسته‌بندی مورد نظر پیدا نشد');
+            }
+            const existing = await manager.findOne(Product, {
+                where: { name, category: { id: categoryId } }
+            });
+            if (existing) {
+                throw new ConflictException(`محصول "${name}" قبلاً در این دسته‌بندی ثبت شده است`);
             }
 
-            const fileName = `${Date.now()}-${image.originalname}`;
-            const filePath = path.join(uploadDir, fileName);
+            let imageUrl: string | undefined = undefined
+            if (image && image.buffer) {
+                const uploadDir = join(process.cwd(), 'uploads', 'products')
+                await fs.promises.mkdir(uploadDir, { recursive: true })
 
-            fs.writeFileSync(filePath, image.buffer);
+                const ext = path.extname(image.originalname || '')
+                const fileName = `${Date.now()}-${uuidv4()}${ext}`
+                const newImagePath = path.join(uploadDir, fileName)
 
-            imageUrl = `/uploads/products/${fileName}`;
-        }
+                await fs.promises.writeFile(newImagePath, image.buffer)
 
-        const product = this.productRepository.create({
-            name,
-            description,
-            price,
-            discountPrice,
-            categoryId,
-            imageUrl,
-            stock: stock || 0,
-            isAvailable: isAvailable ?? true,
-            orderCount: 0,
-        } as DeepPartial<Product>);
+                imageUrl = `/uploads/products/${fileName}`
+            }
 
-        return await this.productRepository.save(product);
+            const product = manager.create(Product, {
+                name,
+                description,
+                price,
+                discountPrice,
+                categoryId,
+                imageUrl,
+                stock: stock || 0,
+                isAvailable: isAvailable ?? true,
+                orderCount: 0
+            })
+
+            return await manager.save(product)
+
+        })
     }
 
 

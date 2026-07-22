@@ -56,7 +56,12 @@ export class MenuController {
     }
 
     @Post('product')
-    @UseInterceptors(FileInterceptor('image'))
+    @UseInterceptors(FileInterceptor('image' , {
+        storage: memoryStorage() , 
+        limits: {
+            fileSize: 5 * 1024 * 1024
+        }
+    }))
     @Roles('admin')
     createProduct(@Body() createProductDto: CreateProductDto, @UploadedFile() image: Express.Multer.File): Promise<Product> {
         return this.menuService.createProduct(createProductDto, image)
