@@ -86,8 +86,6 @@ export class MenuService {
         updateCategoryDto: UpdateCategoryDto,
         image?: Express.Multer.File
     ): Promise<Category> {
-
-
         return await this.dataSource.transaction(async (manager) => {
             const existing = await manager.findOne(Category, { where: { id } });
             if (!existing) {
