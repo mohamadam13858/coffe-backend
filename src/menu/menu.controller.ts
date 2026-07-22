@@ -19,7 +19,12 @@ export class MenuController {
     constructor(private menuService: MenuService) { }
 
     @Post('categories')
-    @UseInterceptors(FileInterceptor('image'))
+    @UseInterceptors(FileInterceptor('image' , {
+        storage: memoryStorage() , 
+        limits: {
+            fileSize: 5 * 1024 * 1024
+        }
+    }))
     @Roles('admin')
     createCategory(@Body() createCategory: CreateCategoryDto, @UploadedFile() image?: Express.Multer.File): Promise<Category> {
         return this.menuService.createCategory(createCategory, image)

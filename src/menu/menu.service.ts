@@ -25,47 +25,42 @@ export class MenuService {
     ) { }
 
     async createCategory(createCategoryDto: CreateCategoryDto, image?: Express.Multer.File): Promise<Category> {
-        const { name, description, orderIndex } = createCategoryDto
 
-        const existingCategory = await this.categoryRepository.findOne({ where: { name } })
-        if (existingCategory) {
-            throw new ConflictException(`دسته بندی با نام ${name} وجود دارد لطفا نام دیگری انتخاب کنید`)
-        }
+        return await this.dataSource.transaction(async (manager) => {
+            const { name, description, orderIndex } = createCategoryDto
 
-
-        let imageUrl: string | undefined
-
-        if (image) {
-            const uploadDir = './uploads/categories';
-
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
+            const existingCategory = await manager.findOne(Category, { where: { name } })
+            if (existingCategory) {
+                throw new ConflictException(`دسته بندی با نام ${name} وجود دارد لطفا نام دیگری انتخاب کنید`)
             }
 
-            const fileName = `${Date.now()}-${image.originalname.replace(/\s+/g, '-')}`;
-            const filePath = path.join(uploadDir, fileName);
+            let imageUrl: string | undefined
 
-            fs.writeFileSync(filePath, image.buffer);
-            imageUrl = `/uploads/categories/${fileName}`;
-        }
+            if (image && image.buffer) {
+                const uploadDir = join(process.cwd(), 'uploads', 'categories')
+                await fs.promises.mkdir(uploadDir, { recursive: true })
+
+                const ext = path.extname(image.originalname || '')
+                const fileName = `${Date.now()}-${uuidv4()}${ext}`
+                const newImagePath = path.join(uploadDir, fileName)
+
+                await fs.promises.writeFile(newImagePath, image.buffer)
+                imageUrl = `/uploads/categories/${fileName}`
+            }
+
+            const category = manager.create(Category, {
+                name,
+                description,
+                imageUrl,
+                orderIndex: orderIndex || 0,
+                isActive: true
+            })
 
 
-        const category = this.categoryRepository.create({
-            name,
-            description,
-            imageUrl,
-            orderIndex: orderIndex || 0,
-            isActive: true
-        } as DeepPartial<Category>)
-
-        try {
-            return await this.categoryRepository.save(category)
-        } catch (error) {
-            console.log(error)
-            throw new InternalServerErrorException()
-        }
+            return await manager.save(category)
 
 
+        })
     }
 
 
