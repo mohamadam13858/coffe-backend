@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { CreateTableDto } from './dto/create-table.dto';
@@ -20,7 +20,13 @@ export class TableController {
 
 
     @Get()
-    getAllTable() {
-        return this.tableService.getAllTable()
+    findAllTable() {
+        return this.tableService.findAllTable()
+    }
+
+
+    @Get()
+    findOndTable(@Param('id') id: string) {
+        return this.tableService.findOneTable(id)
     }
 }

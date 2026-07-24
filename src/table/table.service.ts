@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Table } from './entities/table.entity';
 import { Repository } from 'typeorm';
@@ -36,14 +36,25 @@ export class TableService {
     }
 
 
-    async getAllTable() {
+    async findAllTable() {
         try {
             return await this.tableRepository.find({
                 order: { number: 'ASC' },
                 where: { isActive: true }
             })
         } catch (error) {
-          throw new InternalServerErrorException()
+            throw new InternalServerErrorException()
         }
+    }
+
+
+
+    async findOneTable(id: string) {
+        const table = await this.tableRepository.findOne({ where: { id } })
+        if (!table) {
+            throw new NotFoundException('میز پیدا نشد متاسفانه ')
+        }
+
+        return table
     }
 }
