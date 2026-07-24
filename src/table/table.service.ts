@@ -13,7 +13,7 @@ export class TableService {
     ) { }
 
 
-    async CreateTable(createTableDto: CreateTableDto) {
+    async CreateTable(createTableDto: CreateTableDto): Promise<Table> {
         const { number } = createTableDto
 
         const existing = await this.tableRepository.findOne({ where: { number } })
@@ -32,6 +32,18 @@ export class TableService {
 
         } catch (error) {
             throw new InternalServerErrorException()
+        }
+    }
+
+
+    async getAllTable() {
+        try {
+            return await this.tableRepository.find({
+                order: { number: 'ASC' },
+                where: { isActive: true }
+            })
+        } catch (error) {
+          throw new InternalServerErrorException()
         }
     }
 }
