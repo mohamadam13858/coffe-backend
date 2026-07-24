@@ -11,7 +11,7 @@ export class TableController {
     constructor(private tableService: TableService) { }
 
 
-    @Post('table')
+    @Post()
     @Roles('admin')
     createTable(@Body() createTableDto: CreateTableDto) {
         return this.tableService.CreateTable(createTableDto)
