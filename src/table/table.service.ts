@@ -124,5 +124,19 @@ export class TableService {
     }
 
 
-    
+    async findAvailable(): Promise<Table[]> {
+        try {
+            return await this.tableRepository.find({
+                where: {
+                    status: TableStatus.AVAILABLE,
+                    isActive: true
+                },
+                order: { number: 'ASC' }
+            })
+
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
+    }
+
 }

@@ -22,37 +22,41 @@ export class TableController {
 
 
     @Get()
-    findAllTable():Promise<Table[]> {
+    findAllTable(): Promise<Table[]> {
         return this.tableService.findAllTable()
     }
 
 
     @Get('/:id')
-    findOndTable(@Param('id') id: string):Promise<Table> {
+    findOndTable(@Param('id') id: string): Promise<Table> {
         return this.tableService.findOneTable(id)
     }
 
 
     @Patch('/:id')
     @Roles('admin')
-    updateTable(@Param('id') id: string, @Body() updateTableDto: UpdateTableDto):Promise<Table> {
+    updateTable(@Param('id') id: string, @Body() updateTableDto: UpdateTableDto): Promise<Table> {
         return this.tableService.updateTable(id, updateTableDto)
     }
 
 
     @Delete('/:id')
     @Roles('admin')
-    deleteTable(@Param('id') id: string):Promise<void> {
+    deleteTable(@Param('id') id: string): Promise<void> {
         return this.tableService.deleteTable(id)
     }
 
 
-    @Patch('/:id')
+    @Patch('status/:id')
     @Roles('admin')
-    changeStatus(@Param('id') id: string , @Body() changeStatusTableDto: ChangeStatusTableDto){
-        return this.tableService.changeStatus(id , changeStatusTableDto)
+    changeStatus(@Param('id') id: string, @Body() changeStatusTableDto: ChangeStatusTableDto): Promise<Table> {
+        return this.tableService.changeStatus(id, changeStatusTableDto)
     }
 
 
 
+    @Get('available')
+    findAvailable() {
+        return this.tableService.findAvailable()
+    }
 }
