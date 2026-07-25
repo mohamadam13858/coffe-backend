@@ -15,7 +15,7 @@ export class TableService {
     ) { }
 
 
-    async CreateTable(createTableDto: CreateTableDto): Promise<Table> {
+    async createTable(createTableDto: CreateTableDto): Promise<Table> {
         const { number } = createTableDto
 
         const existing = await this.tableRepository.findOne({ where: { number } })
