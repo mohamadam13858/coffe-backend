@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateTableDto } from './dto/create-table.dto';
 import { TableStatus } from './table-status.enum';
 import { UpdateTableDto } from './dto/update-table.dto';
+import { ChangeStatusTableDto } from './dto/change-status-table.dto';
 
 @Injectable()
 export class TableService {
@@ -92,17 +93,36 @@ export class TableService {
 
     }
 
-    async deleteTable(id: string):Promise<void> {
-       const table = await this.tableRepository.findOne({where: {id}})
-       if (!table) {
-         throw new NotFoundException('میز پیدا نشذ')
-       }
+    async deleteTable(id: string): Promise<void> {
+        const table = await this.tableRepository.findOne({ where: { id } })
+        if (!table) {
+            throw new NotFoundException('میز پیدا نشذ')
+        }
 
-       try {
-        await this.tableRepository.softRemove(table)
-        
-       } catch (error) {
-         throw new InternalServerErrorException()
-       }
+        try {
+            await this.tableRepository.softRemove(table)
+
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
     }
+
+
+    async changeStatus(id: string, changeStatusDto: ChangeStatusTableDto): Promise<Table> {
+        const table = await this.tableRepository.findOne({ where: { id } })
+        if (!table) {
+            throw new NotFoundException('میز پیدا نشد')
+        }
+        table.status = changeStatusDto.status
+
+        try {
+            return await this.tableRepository.save(table)
+
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
+    }
+
+
+    
 }

@@ -6,6 +6,7 @@ import { Roles } from 'src/auth/roles.decorator';
 import { TableService } from './table.service';
 import { Table } from './entities/table.entity';
 import { UpdateTableDto } from './dto/update-table.dto';
+import { ChangeStatusTableDto } from './dto/change-status-table.dto';
 
 @Controller('table')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -43,6 +44,13 @@ export class TableController {
     @Roles('admin')
     deleteTable(@Param('id') id: string):Promise<void> {
         return this.tableService.deleteTable(id)
+    }
+
+
+    @Patch('/:id')
+    @Roles('admin')
+    changeStatus(@Param('id') id: string , @Body() changeStatusTableDto: ChangeStatusTableDto){
+        return this.tableService.changeStatus(id , changeStatusTableDto)
     }
 
 
