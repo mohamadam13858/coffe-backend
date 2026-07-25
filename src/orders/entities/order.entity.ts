@@ -16,6 +16,8 @@ export class Order {
     totalAmount: number
     @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
     discountAmount: number
+    @Column({type: 'decimal' , precision: 10 , scale: 2})
+    finalAmount: number
     @Column({ nullable: true })
     notes?: string
     @ManyToOne(() => User)
@@ -23,7 +25,7 @@ export class Order {
     @Column()
     userId: string 
     @ManyToOne(()=> Table , {nullable: true})
-    table?: string
+    table?: Table
     @Column({nullable: true})
     tableId: string
     @OneToMany(() => OrderItem , (item) => item.order , {   cascade: true})

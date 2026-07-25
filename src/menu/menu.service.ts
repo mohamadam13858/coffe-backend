@@ -74,7 +74,7 @@ export class MenuService {
                 }
             })
         } catch (error) {
-            throw new InternalServerErrorException
+            throw new InternalServerErrorException()
         }
     }
 
