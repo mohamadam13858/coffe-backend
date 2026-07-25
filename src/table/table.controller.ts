@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { CreateTableDto } from './dto/create-table.dto';
@@ -21,21 +21,30 @@ export class TableController {
 
 
     @Get()
-    findAllTable() {
+    findAllTable():Promise<Table[]> {
         return this.tableService.findAllTable()
     }
 
 
     @Get('/:id')
-    findOndTable(@Param('id') id: string) {
+    findOndTable(@Param('id') id: string):Promise<Table> {
         return this.tableService.findOneTable(id)
     }
 
 
     @Patch('/:id')
     @Roles('admin')
-    updateTable(@Param('id') id: string, @Body() updateTableDto: UpdateTableDto) {
+    updateTable(@Param('id') id: string, @Body() updateTableDto: UpdateTableDto):Promise<Table> {
         return this.tableService.updateTable(id, updateTableDto)
     }
+
+
+    @Delete('/:id')
+    @Roles('admin')
+    deleteTable(@Param('id') id: string):Promise<void> {
+        return this.tableService.deleteTable(id)
+    }
+
+
 
 }

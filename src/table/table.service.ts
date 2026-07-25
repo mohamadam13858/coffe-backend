@@ -91,4 +91,18 @@ export class TableService {
         }
 
     }
+
+    async deleteTable(id: string):Promise<void> {
+       const table = await this.tableRepository.findOne({where: {id}})
+       if (!table) {
+         throw new NotFoundException('میز پیدا نشذ')
+       }
+
+       try {
+        await this.tableRepository.softRemove(table)
+        
+       } catch (error) {
+         throw new InternalServerErrorException()
+       }
+    }
 }
