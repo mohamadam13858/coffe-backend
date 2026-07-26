@@ -9,6 +9,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { User } from 'src/auth/user.entity';
 import { TableStatus } from 'src/table/table-status.enum';
 import { OrderStatus } from './order-status.enum';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Injectable()
 export class OrdersService {
@@ -168,5 +169,54 @@ export class OrdersService {
 
 
         })
+    }
+
+
+    async updateStatus(id: string , updateOrderStatusDto : UpdateOrderStatusDto){
+       const {status} = updateOrderStatusDto
+       return await this.dataSource.transaction(async (manager) => {
+        const order = await manager.findOne(Order , {
+            where: {id} , 
+            relations: {
+                table: true
+            }, 
+        })
+
+
+        if (!order) {
+            throw new NotFoundException('سفارش پیدا نشد')
+        }
+
+
+        if (
+            order.status === OrderStatus.DELIVERED || 
+            order.status === OrderStatus.CANCELLED
+        ) {
+
+            throw new BadRequestException('این سفارش قابل تغییر وضعیت نیست')
+            
+        }
+
+        order.status = status 
+        const savedOrder = await manager.save(order)
+
+        if (
+            (status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED) && order.tableId
+        ) {
+            await manager.update(Table , order.tableId , {
+                status: TableStatus.AVAILABLE
+            })
+        }
+
+
+        return {
+            id: savedOrder.id , 
+            status: savedOrder.status , 
+            tableId: savedOrder.tableId , 
+            updatedAt: savedOrder.updatedAt
+        }
+
+
+       })
     }
 }
