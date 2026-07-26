@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Role } from "./role.enum";
+import { Exclude } from "class-transformer";
 
 
 
@@ -11,7 +12,8 @@ export class User {
     mobile: string
     @Column({ unique: true, nullable: true })
     email: string
-    @Column({select: false})
+    @Column()
+    @Exclude()
     password: string
     @Column({ type: 'enum', enum: Role })
     role: Role 

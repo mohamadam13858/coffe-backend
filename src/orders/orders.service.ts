@@ -34,7 +34,8 @@ export class OrdersService {
 
         return await this.dataSource.transaction(async (manager) => {
             const table = await manager.findOne(Table, {
-                where: { id: tableId }
+                where: { id: tableId },
+                lock: { mode: 'pessimistic_write' }
             })
 
             if (!table) {
