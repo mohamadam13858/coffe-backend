@@ -172,14 +172,86 @@ export class OrdersService {
     }
 
 
-    async updateStatus(id: string , updateOrderStatusDto : UpdateOrderStatusDto){
-       const {status} = updateOrderStatusDto
-       return await this.dataSource.transaction(async (manager) => {
-        const order = await manager.findOne(Order , {
-            where: {id} , 
+    async updateStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto) {
+        const { status } = updateOrderStatusDto
+        return await this.dataSource.transaction(async (manager) => {
+            const order = await manager.findOne(Order, {
+                where: { id },
+                relations: {
+                    table: true
+                },
+                lock: { mode: 'pessimistic_write' }
+            })
+
+
+            if (!order) {
+                throw new NotFoundException('سفارش پیدا نشد')
+            }
+
+
+            if (
+                order.status === OrderStatus.DELIVERED ||
+                order.status === OrderStatus.CANCELLED
+            ) {
+
+                throw new BadRequestException('این سفارش قابل تغییر وضعیت نیست')
+
+            }
+
+            order.status = status
+            const savedOrder = await manager.save(order)
+
+            if (
+                (status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED) && order.tableId
+            ) {
+                await manager.update(Table, order.tableId, {
+                    status: TableStatus.AVAILABLE
+                })
+            }
+
+
+            return {
+                id: savedOrder.id,
+                status: savedOrder.status,
+                tableId: savedOrder.tableId,
+                updatedAt: savedOrder.updatedAt
+            }
+
+
+        })
+    }
+
+
+
+    async findAll() {
+        const orders = await this.orderRepository.find({
             relations: {
+                items: {
+                    product: true
+                },
                 table: true
-            }, 
+
+            },
+            order: {
+                createdAt: 'DESC'
+            }
+        })
+
+        return orders.map((order) => this.mapOrderResponse(order))
+
+    }
+
+
+
+    async findOne(id: string) {
+        const order = await this.orderRepository.findOne({
+            where: { id },
+            relations: {
+                items: {
+                    product: true
+                },
+                table: true
+            }
         })
 
 
@@ -188,35 +260,45 @@ export class OrdersService {
         }
 
 
-        if (
-            order.status === OrderStatus.DELIVERED || 
-            order.status === OrderStatus.CANCELLED
-        ) {
+        return this.mapOrderResponse(order)
+    }
 
-            throw new BadRequestException('این سفارش قابل تغییر وضعیت نیست')
-            
-        }
+    
 
-        order.status = status 
-        const savedOrder = await manager.save(order)
-
-        if (
-            (status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED) && order.tableId
-        ) {
-            await manager.update(Table , order.tableId , {
-                status: TableStatus.AVAILABLE
-            })
-        }
-
-
+    private mapOrderResponse(order: Order) {
         return {
-            id: savedOrder.id , 
-            status: savedOrder.status , 
-            tableId: savedOrder.tableId , 
-            updatedAt: savedOrder.updatedAt
-        }
-
-
-       })
+            id: order.id,
+            status: order.status,
+            totalAmount: Number(order.totalAmount),
+            discountAmount: Number(order.discountAmount),
+            finalAmount: Number(order.finalAmount),
+            notes: order.notes,
+            table: order.table
+                ? {
+                    id: order.table.id,
+                    number: order.table.number,
+                    status: order.table.status,
+                }
+                : null,
+            items: order.items?.map((item) => ({
+                id: item.id,
+                quantity: item.quantity,
+                unitPrice: Number(item.unitPrice),
+                totalPrice: Number(item.totalPrice),
+                product: item.product
+                    ? {
+                        id: item.product.id,
+                        name: item.product.name,
+                        imageUrl: item.product.imageUrl,
+                    }
+                    : null,
+            })),
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+        };
     }
 }
+
+
+
+

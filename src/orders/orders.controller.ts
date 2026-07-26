@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { OrdersService } from './orders.service';
@@ -24,5 +24,17 @@ export class OrdersController {
     @Roles('admin')
     updateStatus(@Param('id') id: string ,@Body() updateOrderStatusDto: UpdateOrderStatusDto){
        return this.ordersService.updateStatus(id, updateOrderStatusDto)
+    }
+
+
+    @Get()
+    findAll(){
+        return this.ordersService.findAll()
+    }
+
+
+    @Get(':id')
+    findOne(@Param('id') id: string){
+        return this.ordersService.findOne(id)
     }
 }
