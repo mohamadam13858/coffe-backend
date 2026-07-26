@@ -119,13 +119,13 @@ export class OrdersService {
             await manager.save(table)
 
 
-         
-            const fullOrder = await manager.findOne(Order , {
-                where: {id: savedOrder.id},
+
+            const fullOrder = await manager.findOne(Order, {
+                where: { id: savedOrder.id },
                 relations: {
                     items: {
-                        product: true 
-                    } , 
+                        product: true
+                    },
                     table: true,
                     user: true
                 }
@@ -136,8 +136,33 @@ export class OrdersService {
                 throw new NotFoundException('سفارش ایجاد شد اما قابل بازیابی نبود')
             }
 
-
-            return fullOrder
+            return {
+                id: fullOrder.id,
+                status: fullOrder.status,
+                totalAmount: Number(fullOrder.totalAmount),
+                discountAmount: Number(fullOrder.discountAmount),
+                finalAmount: Number(fullOrder.finalAmount),
+                notes: fullOrder.notes,
+                table: fullOrder.table
+                    ? {
+                        id: fullOrder.table.id,
+                        number: fullOrder.table.number,
+                        status: fullOrder.table.status,
+                    }
+                    : null,
+                items: fullOrder.items.map((item) => ({
+                    id: item.id,
+                    quantity: item.quantity,
+                    unitPrice: Number(item.unitPrice),
+                    totalPrice: Number(item.totalPrice),
+                    product: {
+                        id: item.product.id,
+                        name: item.product.name,
+                        imageUrl: item.product.imageUrl,
+                    },
+                })),
+                createdAt: fullOrder.createdAt,
+            };
 
 
 

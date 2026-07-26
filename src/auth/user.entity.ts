@@ -11,7 +11,7 @@ export class User {
     mobile: string
     @Column({ unique: true, nullable: true })
     email: string
-    @Column()
+    @Column({select: false})
     password: string
     @Column({ type: 'enum', enum: Role })
     role: Role 

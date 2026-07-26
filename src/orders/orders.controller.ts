@@ -4,6 +4,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
+import { User } from 'src/auth/user.entity';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -12,7 +13,7 @@ export class OrdersController {
  
 
     @Post()
-    createOrder(@Body() createOrderDto: CreateOrderDto ,@GetUser() user ){
-           this.ordersService.createOrder(createOrderDto , user)
+    createOrder(@Body() createOrderDto: CreateOrderDto ,@GetUser() user: User ){
+          return this.ordersService.createOrder(createOrderDto , user)
     }
 }
