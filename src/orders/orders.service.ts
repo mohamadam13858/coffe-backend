@@ -95,6 +95,7 @@ export class OrdersService {
                 status: OrderStatus.PENDING,
                 totalAmount,
                 discountAmount: 0,
+                finalAmount: totalAmount - 0,
                 notes,
                 userId: user.id,
                 tableId
