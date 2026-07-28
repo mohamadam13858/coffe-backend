@@ -18,8 +18,16 @@ export class UsersService {
     ) { }
 
 
-    async getAllUsers(filterDto: GetUserFilterDto) {
+    async getAllUsers(filterDto: GetUserFilterDto): Promise<{
+        data: UserResponseDto[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }> {
         const { search, role, isActive, page = 1, limit = 10 } = filterDto
+        const pageNumber = Number(page) || 1;
+        const limitNumber = Number(limit) || 10;
         const query = this.userRepository.createQueryBuilder('user')
 
         if (search) {
@@ -34,26 +42,26 @@ export class UsersService {
 
 
         if (role) {
-            query.andWhere(`user.role = :role` , {role})
+            query.andWhere(`user.role = :role`, { role })
         }
 
 
         if (isActive !== undefined) {
-             query.andWhere(`user.isActive = :isActive` , {isActive})
+            query.andWhere(`user.isActive = :isActive`, { isActive })
         }
 
 
-        query.orderBy('user.createdAt' , 'DESC').skip((page - 1) * limit).take(limit)
-        const [users , total] = await query.getManyAndCount()
+        query.orderBy('user.createdAt', 'DESC').skip((pageNumber - 1) * limitNumber).take(limitNumber)
+        const [users, total] = await query.getManyAndCount()
 
         return {
-            data: plainToInstance(UserResponseDto , users , {
+            data: plainToInstance(UserResponseDto, users, {
                 excludeExtraneousValues: true
-            })
-            total , 
-            page , 
-            limit , 
-            totalPages: Math.ceil(total / limit)
+            }),
+            total,
+            page: pageNumber ,
+            limit: limitNumber , 
+            totalPages: Math.ceil(total / limitNumber)
         }
     }
 

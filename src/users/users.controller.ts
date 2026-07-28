@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { UsersService } from './users.service';
@@ -9,6 +9,7 @@ import { BlockUserDto } from './dto/block-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { User } from './entities/user.entity';
+import { GetUserFilterDto } from './dto/get-user-fileter.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -18,8 +19,14 @@ export class UsersController {
 
     @Get()
     @Roles('admin')
-    getAllUsers(): Promise<UserResponseDto[]> {
-        return this.usersService.getAllUsers()
+    getAllUsers(@Query() filterDto: GetUserFilterDto): Promise<{
+        data: UserResponseDto[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }> {
+        return this.usersService.getAllUsers(filterDto)
     }
 
     @Get(':id')
@@ -30,15 +37,15 @@ export class UsersController {
 
     @Patch(':id')
     @Roles('admin')
-    changeUserRole(@Param('id') id: string, @Body() userRoleDto: UserRoleDto  , @GetUser() user: User): Promise<UserResponseDto> {
-        return this.usersService.changeUserRole(id, userRoleDto , user)
+    changeUserRole(@Param('id') id: string, @Body() userRoleDto: UserRoleDto, @GetUser() user: User): Promise<UserResponseDto> {
+        return this.usersService.changeUserRole(id, userRoleDto, user)
     }
 
 
     @Patch(':id')
     @Roles('admin')
-    blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto , @GetUser() user: User): Promise<UserResponseDto> {
-        return this.usersService.blockUser(id, blockUserDto , user)
+    blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto, @GetUser() user: User): Promise<UserResponseDto> {
+        return this.usersService.blockUser(id, blockUserDto, user)
     }
 
 
