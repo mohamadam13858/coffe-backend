@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { UsersService } from './users.service';
@@ -29,29 +29,43 @@ export class UsersController {
         return this.usersService.getAllUsers(filterDto)
     }
 
+    @Get('me')
+    getMe(@GetUser() user: User) {
+        return this.usersService.getMe(user.id);
+    }
+
     @Get(':id')
     @Roles('admin')
     getUser(@Param('id') id: string): Promise<UserResponseDto> {
         return this.usersService.getUser(id)
     }
 
-    @Patch(':id')
+    @Patch(':id/role')
     @Roles('admin')
     changeUserRole(@Param('id') id: string, @Body() userRoleDto: UserRoleDto, @GetUser() user: User): Promise<UserResponseDto> {
         return this.usersService.changeUserRole(id, userRoleDto, user)
     }
 
 
-    @Patch(':id')
+    @Patch(':id/block')
     @Roles('admin')
     blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto, @GetUser() user: User): Promise<UserResponseDto> {
         return this.usersService.blockUser(id, blockUserDto, user)
     }
 
 
-    @Patch(':id')
-    updateProfile(@Param('id') id: string, @Body() updateProfileDto: UpdateProfileDto): Promise<UserResponseDto> {
-        return this.usersService.updateProfile(id, updateProfileDto)
+    @Patch('me')
+    updateProfile(@GetUser() user: User, @Body() updateProfileDto: UpdateProfileDto): Promise<UserResponseDto> {
+        return this.usersService.updateProfile(user.id, updateProfileDto)
+    }
+
+    @Delete(':id')
+    @Roles('admin')
+    removeUser(
+        @Param('id') id: string,
+        @GetUser() currentUser: User,
+    ) {
+        return this.usersService.removeUser(id, currentUser);
     }
 
 }
