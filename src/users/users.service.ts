@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from './dto/user.response.dto';
 import { UserRoleDto } from './dto/update-user-role.dto';
+import { BlockUserDto } from './dto/block-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -53,6 +54,22 @@ export class UsersService {
         })
 
 
+    }
+
+
+
+    async blockUser(id: string, blockUserDto: BlockUserDto): Promise<UserResponseDto> {
+        const user = await this.userRepository.findOne({ where: { id } })
+        if (!user) {
+            throw new NotFoundException('کاربر با این شناسه یافت نشد ')
+        }
+
+        user.isActive = blockUserDto.isActive
+        const savedUser = await this.userRepository.save(user)
+
+        return plainToInstance(UserResponseDto, savedUser, {
+            excludeExtraneousValues: true
+        })
     }
 
 
