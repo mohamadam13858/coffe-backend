@@ -9,7 +9,7 @@ import { BlockUserDto } from './dto/block-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { User } from './entities/user.entity';
-import { GetUserFilterDto } from './dto/get-user-fileter.dto';
+import { GetUserFilterDto } from './dto/get-user-filter.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -29,16 +29,18 @@ export class UsersController {
         return this.usersService.getAllUsers(filterDto)
     }
 
-    @Get('me')
-    getMe(@GetUser() user: User) {
-        return this.usersService.getMe(user.id);
-    }
-
     @Get(':id')
     @Roles('admin')
     getUser(@Param('id') id: string): Promise<UserResponseDto> {
         return this.usersService.getUser(id)
     }
+
+
+    @Get('me')
+    getMe(@GetUser() user: User) {
+        return this.usersService.getMe(user.id);
+    }
+
 
     @Patch(':id/role')
     @Roles('admin')

@@ -1,6 +1,6 @@
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 import { Role } from "../enums/role.enum";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 
 
 export class GetUserFilterDto {
@@ -13,6 +13,11 @@ export class GetUserFilterDto {
     role?: Role
 
     @IsOptional()
+    @Transform(({ value }) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    })
     @IsBoolean()
     isActive?: boolean
 

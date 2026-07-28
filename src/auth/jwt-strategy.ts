@@ -27,6 +27,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException()
         }
 
+        if (user.isActive === false) {
+            throw new UnauthorizedException('حساب کاربری شما غیرفعال شده است');
+        }
+
+        if (user.deletedAt) {
+            throw new UnauthorizedException('حساب کاربری حذف شده است');
+        }
+
         return user
     }
 }
