@@ -1,4 +1,4 @@
-import { User } from "src/auth/user.entity";
+import { User } from "src/users/entities/user.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { OrderStatus } from "../order-status.enum";
 import { OrderItem } from "./order-item.entity";

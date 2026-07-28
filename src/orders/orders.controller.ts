@@ -4,7 +4,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
-import { User } from 'src/auth/user.entity';
+import { User } from 'src/users/entities/user.entity';
 import { Roles } from 'src/auth/roles.decorator';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 

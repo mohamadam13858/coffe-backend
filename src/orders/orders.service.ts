@@ -6,7 +6,7 @@ import { OrderItem } from './entities/order-item.entity';
 import { Product } from 'src/menu/entities/product.entity';
 import { Table } from 'src/table/entities/table.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { User } from 'src/auth/user.entity';
+import { User } from 'src/users/entities/user.entity';
 import { TableStatus } from 'src/table/table-status.enum';
 import { OrderStatus } from './order-status.enum';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -18,7 +18,7 @@ export class OrdersService {
     constructor(
         @InjectRepository(Order)
         private orderRepository: Repository<Order>,
-        
+
         private dataSource: DataSource
 
     ) { }
@@ -237,41 +237,6 @@ export class OrdersService {
             excludeExtraneousValues: true
         })
     }
-
-
-
-    // private mapOrderResponse(order: Order) {
-    //     return {
-    //         id: order.id,
-    //         status: order.status,
-    //         totalAmount: Number(order.totalAmount),
-    //         discountAmount: Number(order.discountAmount),
-    //         finalAmount: Number(order.finalAmount),
-    //         notes: order.notes,
-    //         table: order.table
-    //             ? {
-    //                 id: order.table.id,
-    //                 number: order.table.number,
-    //                 status: order.table.status,
-    //             }
-    //             : null,
-    //         items: order.items?.map((item) => ({
-    //             id: item.id,
-    //             quantity: item.quantity,
-    //             unitPrice: Number(item.unitPrice),
-    //             totalPrice: Number(item.totalPrice),
-    //             product: item.product
-    //                 ? {
-    //                     id: item.product.id,
-    //                     name: item.product.name,
-    //                     imageUrl: item.product.imageUrl,
-    //                 }
-    //                 : null,
-    //         })),
-    //         createdAt: order.createdAt,
-    //         updatedAt: order.updatedAt,
-    //     };
-    // }
 }
 
 

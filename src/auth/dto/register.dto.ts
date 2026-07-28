@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsMobilePhone, IsNotEmpty, IsOptional, Length, Matches } from "class-validator";
-import { Role } from "../role.enum";
+import { Role } from "../../users/enums/role.enum";
 
 
 export class RegisterDto {

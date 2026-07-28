@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user.entity';
+import { User } from '../users/entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt-strategy';
 import { RolesGuard } from './roles.guard';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { RolesGuard } from './roles.guard';
         }
       })
     }),
-    TypeOrmModule.forFeature([User])
+    UsersModule
   ],
   providers: [AuthService , JwtStrategy , RolesGuard],
   controllers: [AuthController],
