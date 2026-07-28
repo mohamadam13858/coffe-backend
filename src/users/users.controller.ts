@@ -7,6 +7,8 @@ import { UserResponseDto } from './dto/user.response.dto';
 import { UserRoleDto } from './dto/update-user-role.dto';
 import { BlockUserDto } from './dto/block-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { GetUser } from 'src/auth/get-user.decorator';
+import { User } from './entities/user.entity';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -28,15 +30,15 @@ export class UsersController {
 
     @Patch(':id')
     @Roles('admin')
-    changeUserRole(@Param('id') id: string, @Body() userRoleDto: UserRoleDto): Promise<UserResponseDto> {
-        return this.usersService.changeUserRole(id, userRoleDto)
+    changeUserRole(@Param('id') id: string, @Body() userRoleDto: UserRoleDto  , @GetUser() user: User): Promise<UserResponseDto> {
+        return this.usersService.changeUserRole(id, userRoleDto , user)
     }
 
 
     @Patch(':id')
     @Roles('admin')
-    blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto): Promise<UserResponseDto> {
-        return this.usersService.blockUser(id, blockUserDto)
+    blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto , @GetUser() user: User): Promise<UserResponseDto> {
+        return this.usersService.blockUser(id, blockUserDto , user)
     }
 
 

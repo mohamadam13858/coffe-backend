@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Role } from "../enums/role.enum";
 import { Exclude } from "class-transformer";
 
@@ -16,7 +16,7 @@ export class User {
     @Exclude()
     password: string
     @Column({ type: 'enum', enum: Role })
-    role: Role 
+    role: Role
     @Column({ length: 100, nullable: true })
     firstName: string
     @Column({ length: 100, nullable: true })
@@ -27,4 +27,6 @@ export class User {
     createdAt: Date
     @UpdateDateColumn()
     updatedAt: Date
+    @DeleteDateColumn()
+    deletedAt: Date
 }
