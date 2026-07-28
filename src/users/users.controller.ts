@@ -1,10 +1,10 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { UsersService } from './users.service';
 import { Roles } from 'src/auth/roles.decorator';
-import { User } from './entities/user.entity';
 import { UserResponseDto } from './dto/user.response.dto';
+import { UserRoleDto } from './dto/update-user-role.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -22,6 +22,12 @@ export class UsersController {
     @Roles('admin')
     getUser(@Param('id') id: string): Promise<UserResponseDto> {
         return this.usersService.getUser(id)
+    }
+
+    @Patch(':id')
+    @Roles('admin')
+    changeUserRole(@Param('id') id : string , @Body() userRoleDto: UserRoleDto): Promise<UserResponseDto>{
+      return this.usersService.changeUserRole(id , userRoleDto)
     }
 
 }

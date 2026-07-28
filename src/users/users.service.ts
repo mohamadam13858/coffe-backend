@@ -4,6 +4,7 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from './dto/user.response.dto';
+import { UserRoleDto } from './dto/update-user-role.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,20 +19,41 @@ export class UsersService {
             where: { isActive: true },
         })
 
-        return plainToInstance(UserResponseDto , users , {
+        return plainToInstance(UserResponseDto, users, {
             excludeExtraneousValues: true
         })
     }
 
 
     async getUser(id: string): Promise<UserResponseDto> {
-        const user = await this.userRepository.findOne({where : {id}})
+        const user = await this.userRepository.findOne({ where: { id } })
+
         if (!user) {
             throw new NotFoundException('کاربر با این شناسه پیدا نشد')
         }
 
-        return plainToInstance(UserResponseDto , user , {
+        return plainToInstance(UserResponseDto, user, {
             excludeExtraneousValues: true
         })
     }
+
+
+    async changeUserRole(id: string, changeUserRoleDto: UserRoleDto): Promise<UserResponseDto> {
+        const { role } = changeUserRoleDto
+        const user = await this.userRepository.findOne({ where: { id } })
+        if (!user) {
+            throw new NotFoundException('کاربر با این شناسه پیدا نشد')
+        }
+
+        user.role = role
+        const savedUser = await this.userRepository.save(user)
+
+        return plainToInstance(UserResponseDto, savedUser, {
+            excludeExtraneousValues: true
+        })
+
+
+    }
+
+
 }
