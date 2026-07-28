@@ -6,6 +6,7 @@ import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from './dto/user.response.dto';
 import { UserRoleDto } from './dto/update-user-role.dto';
 import { BlockUserDto } from './dto/block-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -70,6 +71,29 @@ export class UsersService {
         return plainToInstance(UserResponseDto, savedUser, {
             excludeExtraneousValues: true
         })
+    }
+
+
+    async updateProfile(id: string, updateProfileDto: UpdateProfileDto): Promise<UserResponseDto> {
+
+        const user = await this.userRepository.preload({
+            id,
+            ...updateProfileDto
+        })
+
+        if (!user) {
+            throw new NotFoundException('کاربر یافت نشد')
+        }
+
+
+        const savedUser = await this.userRepository.save(user)
+
+
+        return plainToInstance(UserResponseDto, savedUser, {
+            excludeExtraneousValues: true
+        })
+
+
     }
 
 

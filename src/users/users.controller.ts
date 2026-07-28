@@ -6,6 +6,7 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserResponseDto } from './dto/user.response.dto';
 import { UserRoleDto } from './dto/update-user-role.dto';
 import { BlockUserDto } from './dto/block-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -27,15 +28,21 @@ export class UsersController {
 
     @Patch(':id')
     @Roles('admin')
-    changeUserRole(@Param('id') id : string , @Body() userRoleDto: UserRoleDto): Promise<UserResponseDto>{
-      return this.usersService.changeUserRole(id , userRoleDto)
+    changeUserRole(@Param('id') id: string, @Body() userRoleDto: UserRoleDto): Promise<UserResponseDto> {
+        return this.usersService.changeUserRole(id, userRoleDto)
     }
 
 
     @Patch(':id')
     @Roles('admin')
-    blockUser(@Param('id') id: string , @Body() blockUserDto : BlockUserDto): Promise<UserResponseDto>{
-        return this.usersService.blockUser(id , blockUserDto)
+    blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto): Promise<UserResponseDto> {
+        return this.usersService.blockUser(id, blockUserDto)
+    }
+
+
+    @Patch(':id')
+    updateProfile(@Param('id') id: string, @Body() updateProfileDto: UpdateProfileDto): Promise<UserResponseDto> {
+        return this.usersService.updateProfile(id, updateProfileDto)
     }
 
 }
