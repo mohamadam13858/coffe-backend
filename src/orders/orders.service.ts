@@ -10,22 +10,15 @@ import { User } from 'src/auth/user.entity';
 import { TableStatus } from 'src/table/table-status.enum';
 import { OrderStatus } from './order-status.enum';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { plainToInstance } from 'class-transformer';
+import { OrderResponseDto } from './dto/order-response.dto';
 
 @Injectable()
 export class OrdersService {
     constructor(
         @InjectRepository(Order)
         private orderRepository: Repository<Order>,
-
-        @InjectRepository(OrderItem)
-        private orderItemRepository: Repository<OrderItem>,
-
-        @InjectRepository(Product)
-        private productRepository: Repository<Product>,
-
-        @InjectRepository(Table)
-        private tableRepository: Repository<Table>,
-
+        
         private dataSource: DataSource
 
     ) { }
@@ -138,33 +131,11 @@ export class OrdersService {
                 throw new NotFoundException('سفارش ایجاد شد اما قابل بازیابی نبود')
             }
 
-            return {
-                id: fullOrder.id,
-                status: fullOrder.status,
-                totalAmount: Number(fullOrder.totalAmount),
-                discountAmount: Number(fullOrder.discountAmount),
-                finalAmount: Number(fullOrder.finalAmount),
-                notes: fullOrder.notes,
-                table: fullOrder.table
-                    ? {
-                        id: fullOrder.table.id,
-                        number: fullOrder.table.number,
-                        status: fullOrder.table.status,
-                    }
-                    : null,
-                items: fullOrder.items.map((item) => ({
-                    id: item.id,
-                    quantity: item.quantity,
-                    unitPrice: Number(item.unitPrice),
-                    totalPrice: Number(item.totalPrice),
-                    product: {
-                        id: item.product.id,
-                        name: item.product.name,
-                        imageUrl: item.product.imageUrl,
-                    },
-                })),
-                createdAt: fullOrder.createdAt,
-            };
+
+            return plainToInstance(OrderResponseDto, fullOrder, {
+                excludeExtraneousValues: true
+            })
+
 
 
 
@@ -237,7 +208,9 @@ export class OrdersService {
             }
         })
 
-        return orders.map((order) => this.mapOrderResponse(order))
+        return plainToInstance(OrderResponseDto, orders, {
+            excludeExtraneousValues: true
+        })
 
     }
 
@@ -260,43 +233,45 @@ export class OrdersService {
         }
 
 
-        return this.mapOrderResponse(order)
+        return plainToInstance(OrderResponseDto, order, {
+            excludeExtraneousValues: true
+        })
     }
 
-    
 
-    private mapOrderResponse(order: Order) {
-        return {
-            id: order.id,
-            status: order.status,
-            totalAmount: Number(order.totalAmount),
-            discountAmount: Number(order.discountAmount),
-            finalAmount: Number(order.finalAmount),
-            notes: order.notes,
-            table: order.table
-                ? {
-                    id: order.table.id,
-                    number: order.table.number,
-                    status: order.table.status,
-                }
-                : null,
-            items: order.items?.map((item) => ({
-                id: item.id,
-                quantity: item.quantity,
-                unitPrice: Number(item.unitPrice),
-                totalPrice: Number(item.totalPrice),
-                product: item.product
-                    ? {
-                        id: item.product.id,
-                        name: item.product.name,
-                        imageUrl: item.product.imageUrl,
-                    }
-                    : null,
-            })),
-            createdAt: order.createdAt,
-            updatedAt: order.updatedAt,
-        };
-    }
+
+    // private mapOrderResponse(order: Order) {
+    //     return {
+    //         id: order.id,
+    //         status: order.status,
+    //         totalAmount: Number(order.totalAmount),
+    //         discountAmount: Number(order.discountAmount),
+    //         finalAmount: Number(order.finalAmount),
+    //         notes: order.notes,
+    //         table: order.table
+    //             ? {
+    //                 id: order.table.id,
+    //                 number: order.table.number,
+    //                 status: order.table.status,
+    //             }
+    //             : null,
+    //         items: order.items?.map((item) => ({
+    //             id: item.id,
+    //             quantity: item.quantity,
+    //             unitPrice: Number(item.unitPrice),
+    //             totalPrice: Number(item.totalPrice),
+    //             product: item.product
+    //                 ? {
+    //                     id: item.product.id,
+    //                     name: item.product.name,
+    //                     imageUrl: item.product.imageUrl,
+    //                 }
+    //                 : null,
+    //         })),
+    //         createdAt: order.createdAt,
+    //         updatedAt: order.updatedAt,
+    //     };
+    // }
 }
 
 
