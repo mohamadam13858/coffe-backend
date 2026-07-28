@@ -8,6 +8,7 @@ import { UserRoleDto } from './dto/update-user-role.dto';
 import { BlockUserDto } from './dto/block-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Role } from './enums/role.enum';
+import { GetUserFilterDto } from './dto/get-user-fileter.dto';
 
 @Injectable()
 export class UsersService {
@@ -17,14 +18,43 @@ export class UsersService {
     ) { }
 
 
-    async getAllUsers(): Promise<UserResponseDto[]> {
-        const users = await this.userRepository.find({
-           order: {createdAt: 'DESC'}
-        })
+    async getAllUsers(filterDto: GetUserFilterDto) {
+        const { search, role, isActive, page = 1, limit = 10 } = filterDto
+        const query = this.userRepository.createQueryBuilder('user')
 
-        return plainToInstance(UserResponseDto, users, {
-            excludeExtraneousValues: true
-        })
+        if (search) {
+            query.andWhere(
+                `(user.mobile ILIKE :search
+        OR user.firstName ILIKE :search
+        OR user.lastName ILIKE :search
+        OR user.email ILIKE :search)`,
+                { search: `%${search}%` },
+            );
+        }
+
+
+        if (role) {
+            query.andWhere(`user.role = :role` , {role})
+        }
+
+
+        if (isActive !== undefined) {
+             query.andWhere(`user.isActive = :isActive` , {isActive})
+        }
+
+
+        query.orderBy('user.createdAt' , 'DESC').skip((page - 1) * limit).take(limit)
+        const [users , total] = await query.getManyAndCount()
+
+        return {
+            data: plainToInstance(UserResponseDto , users , {
+                excludeExtraneousValues: true
+            })
+            total , 
+            page , 
+            limit , 
+            totalPages: Math.ceil(total / limit)
+        }
     }
 
 
