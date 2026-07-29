@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsUUID } from "class-validator";
+import { Type } from "class-transformer";
+import { IsInt, IsOptional, IsString, IsUUID, Min } from "class-validator";
 
 
 
@@ -10,5 +11,18 @@ export class GetProductsFilterDto {
 
     @IsOptional()
     @IsUUID()
-    categoryId: string  
+    categoryId: string
+
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    page?: number = 1
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    limit?: number = 10
 }

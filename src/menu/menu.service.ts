@@ -12,6 +12,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { join } from 'path'
+import { plainToInstance } from 'class-transformer';
+import { ProductResponseDto } from './dto/product-response.dto';
+import { PaginatedResponse } from 'src/common/interface/paginated-response.interface';
 
 
 @Injectable()
@@ -86,7 +89,7 @@ export class MenuService {
         updateCategoryDto: UpdateCategoryDto,
         image?: Express.Multer.File
     ): Promise<Category> {
-            return await this.dataSource.transaction(async (manager) => {
+        return await this.dataSource.transaction(async (manager) => {
             const existing = await manager.findOne(Category, { where: { id } });
             if (!existing) {
                 throw new NotFoundException(`دسته‌بندی با شناسه ${id} پیدا نشد`);
@@ -165,8 +168,10 @@ export class MenuService {
     }
 
 
-    async getProducts(filterDto: GetProductsFilterDto): Promise<Product[]> {
-        const { search, categoryId } = filterDto
+    async getProducts(filterDto: GetProductsFilterDto): Promise<PaginatedResponse<ProductResponseDto>> {
+        const { search, categoryId, page, limit } = filterDto
+        const pageNumber = Math.max(Number(page) || 1, 1);
+        const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100);
         const query = this.productRepository.createQueryBuilder('product')
 
 
@@ -182,8 +187,17 @@ export class MenuService {
         }
 
         try {
-            const products = await query.getMany()
-            return products
+            query.orderBy('product.id', 'DESC').skip((pageNumber - 1) * limitNumber).take(limitNumber)
+            const [products, total] = await query.getManyAndCount()
+            return {
+                data: plainToInstance(ProductResponseDto, products, {
+                    excludeExtraneousValues: true
+                }),
+                total,
+                page: pageNumber,
+                limit: limitNumber,
+                totalPages: Math.ceil(total / limitNumber)
+            }
         } catch (error) {
             throw new InternalServerErrorException()
         }

@@ -12,6 +12,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { PaginatedResponse } from 'src/common/interface/paginated-response.interface';
+import { ProductResponseDto } from './dto/product-response.dto';
 
 @Controller('menu')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -56,7 +58,7 @@ export class MenuController {
     }
 
     @Get('products')
-    getAllProducts(@Query() filterDto: GetProductsFilterDto): Promise<Product[]> {
+    getAllProducts(@Query() filterDto: GetProductsFilterDto): Promise<PaginatedResponse<ProductResponseDto>> {
         return this.menuService.getProducts(filterDto)
     }
 
