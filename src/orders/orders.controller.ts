@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { OrdersService } from './orders.service';
@@ -7,6 +7,7 @@ import { GetUser } from 'src/auth/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { Roles } from 'src/auth/roles.decorator';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -28,8 +29,8 @@ export class OrdersController {
 
 
     @Get()
-    findAll(){
-        return this.ordersService.findAll()
+    findAll(@Query() filterDto: GetOrdersFilterDto){
+        return this.ordersService.findAll(filterDto)
     }
 
 

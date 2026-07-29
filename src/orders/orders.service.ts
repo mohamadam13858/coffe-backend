@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { DataSource, In, Repository } from 'typeorm';
@@ -12,6 +12,7 @@ import { OrderStatus } from './order-status.enum';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { plainToInstance } from 'class-transformer';
 import { OrderResponseDto } from './dto/order-response.dto';
+import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
 
 @Injectable()
 export class OrdersService {
@@ -194,24 +195,59 @@ export class OrdersService {
 
 
 
-    async findAll() {
-        const orders = await this.orderRepository.find({
-            relations: {
-                items: {
-                    product: true
-                },
-                table: true
+    async findAll(filterDto: GetOrdersFilterDto) {
+        const { search, status, tableId, page = 1, limit = 10 } = filterDto
 
-            },
-            order: {
-                createdAt: 'DESC'
+        const pageNumber = Math.max(Number(page) || 1, 1)
+        const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100)
+
+
+        const query = this.orderRepository.createQueryBuilder('order')
+            .leftJoinAndSelect('order.item', 'items')
+            .leftJoinAndSelect('items.product', 'product')
+            .leftJoinAndSelect('order.table', 'table')
+
+        if (search?.trim()) {
+            const normalizedSearch = `%${search.trim()}%`
+            query.andWhere(
+                `(order.notes ILIKE :search OR table.number ILIKE :search)`,
+                { search: normalizedSearch },
+            );
+        }
+
+        if (status) {
+            query.andWhere('order.status = :status', { status });
+        }
+
+        if (tableId) {
+            query.andWhere('order.tableId = :tableId', { tableId });
+        }
+
+        query
+        .orderBy('order.createdAt' ,'DESC')
+        .addOrderBy('order.id' , 'DESC')
+        .skip((pageNumber - 1) * limitNumber)
+        .take(limitNumber)
+
+
+        const [orders , total ] = await query.getManyAndCount()
+
+
+        try {
+
+            return {
+                data: plainToInstance(OrderResponseDto , orders ,{
+                    excludeExtraneousValues: true
+                }),
+                total,
+                page: pageNumber , 
+                limit: limitNumber , 
+                totalPage: Math.ceil(total / limitNumber)
             }
-        })
-
-        return plainToInstance(OrderResponseDto, orders, {
-            excludeExtraneousValues: true
-        })
-
+            
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
     }
 
 
