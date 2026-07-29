@@ -224,27 +224,27 @@ export class OrdersService {
         }
 
         query
-        .orderBy('order.createdAt' ,'DESC')
-        .addOrderBy('order.id' , 'DESC')
-        .skip((pageNumber - 1) * limitNumber)
-        .take(limitNumber)
+            .orderBy('order.createdAt', 'DESC')
+            .addOrderBy('order.id', 'DESC')
+            .skip((pageNumber - 1) * limitNumber)
+            .take(limitNumber)
 
 
-        
-        
+
+
         try {
-            const [orders , total ] = await query.getManyAndCount()
+            const [orders, total] = await query.getManyAndCount()
 
             return {
-                data: plainToInstance(OrderResponseDto , orders ,{
+                data: plainToInstance(OrderResponseDto, orders, {
                     excludeExtraneousValues: true
                 }),
                 total,
-                page: pageNumber , 
-                limit: limitNumber , 
+                page: pageNumber,
+                limit: limitNumber,
                 totalPage: Math.ceil(total / limitNumber)
             }
-            
+
         } catch (error) {
             throw new InternalServerErrorException()
         }
@@ -272,6 +272,43 @@ export class OrdersService {
         return plainToInstance(OrderResponseDto, order, {
             excludeExtraneousValues: true
         })
+    }
+
+
+    async findMyOrders(userId: string, filterDto: GetOrdersFilterDto) {
+        const { status, page = 1, limit = 10 } = filterDto
+        const pageNumber = Math.max(Number(page) || 1, 1);
+        const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100);
+
+        const query = this.orderRepository
+            .createQueryBuilder('order')
+            .leftJoinAndSelect('order.items', 'items')
+            .leftJoinAndSelect('items.product', 'product')
+            .leftJoinAndSelect('order.table', 'table')
+            .where('order.userId = :userId', { userId })
+
+        if (status) {
+            query.andWhere('order.status = :status', { status });
+        }
+
+
+
+        query
+            .orderBy('order.createdAt', 'DESC')
+            .skip((pageNumber - 1) * limitNumber)
+            .take(limitNumber)
+
+        const [orders, total] = await query.getManyAndCount()
+
+        return {
+            data: plainToInstance(OrderResponseDto, orders, {
+                excludeExtraneousValues: true,
+            }),
+            total,
+            page: pageNumber,
+            limit: limitNumber,
+            totalPages: Math.ceil(total / limitNumber),
+        };
     }
 }
 
