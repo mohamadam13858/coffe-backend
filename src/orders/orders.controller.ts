@@ -12,30 +12,38 @@ import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class OrdersController {
-    constructor(private ordersService: OrdersService){}
- 
+    constructor(private ordersService: OrdersService) { }
+
 
     @Post()
-    createOrder(@Body() createOrderDto: CreateOrderDto ,@GetUser() user: User ){
-          return this.ordersService.createOrder(createOrderDto , user)
+    createOrder(@Body() createOrderDto: CreateOrderDto, @GetUser() user: User) {
+        return this.ordersService.createOrder(createOrderDto, user)
     }
 
 
     @Patch(':id/status')
     @Roles('admin')
-    updateStatus(@Param('id') id: string ,@Body() updateOrderStatusDto: UpdateOrderStatusDto){
-       return this.ordersService.updateStatus(id, updateOrderStatusDto)
+    updateStatus(@Param('id') id: string, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
+        return this.ordersService.updateStatus(id, updateOrderStatusDto)
     }
 
 
     @Get()
-    findAll(@Query() filterDto: GetOrdersFilterDto){
+    findAll(@Query() filterDto: GetOrdersFilterDto) {
         return this.ordersService.findAll(filterDto)
     }
 
 
     @Get(':id')
-    findOne(@Param('id') id: string){
+    findOne(@Param('id') id: string) {
         return this.ordersService.findOne(id)
+    }
+
+    @Get('my')
+    findMyOrders(
+        @GetUser() user: User,
+        @Query() filterDto: GetOrdersFilterDto
+    ) {
+        return this.ordersService.findMyOrders(user.id, filterDto)
     }
 }
