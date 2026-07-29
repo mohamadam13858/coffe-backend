@@ -9,7 +9,7 @@ import { BlockUserDto } from './dto/block-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Role } from './enums/role.enum';
 import { GetUserFilterDto } from './dto/get-user-filter.dto';
-import { PaginatedResponse } from 'src/common/inteface/paginated-response.interface';
+import { PaginatedResponse } from 'src/common/interface/paginated-response.interface';
 
 
 @Injectable()
@@ -45,7 +45,7 @@ export class UsersService {
 
 
         if (typeof isActive === 'boolean') {
-            query.andWhere(`user.isActive = :isActive`, { isActive })
+            query.andWhere('user.isActive = :isActive', { isActive });
         }
 
 
@@ -97,7 +97,7 @@ export class UsersService {
 
 
 
-    async blockUser(id: string, blockUserDto: BlockUserDto, currentUser: User): Promise<UserResponseDto> {
+    async changeStatus(id: string, blockUserDto: BlockUserDto, currentUser: User): Promise<UserResponseDto> {
         if (id === currentUser.id) {
             throw new BadRequestException('نمی توانید وضعیت خود را تغییر بدهید')
         }

@@ -11,25 +11,25 @@ export class GetUserFilterDto {
     @IsOptional()
     @IsEnum(Role)
     role?: Role
-
+    
     @IsOptional()
     @Transform(({ value }) => {
-        if (value === 'true') return true;
-        if (value === 'false') return false;
-        return value;
+        if (value === 'true') return true
+        if (value === 'false') return false
+        return undefined;
     })
     @IsBoolean()
-    isActive?: boolean
+    isActive?: string;
 
     @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)
-    page?: Number = 1
+    page?: number = 1
 
     @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)
-    limit?: Number = 10
+    limit?: number = 10
 }

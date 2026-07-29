@@ -10,6 +10,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { User } from './entities/user.entity';
 import { GetUserFilterDto } from './dto/get-user-filter.dto';
+import { PaginatedResponse } from 'src/common/interface/paginated-response.interface';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -19,13 +20,7 @@ export class UsersController {
 
     @Get()
     @Roles('admin')
-    getAllUsers(@Query() filterDto: GetUserFilterDto): Promise<{
-        data: UserResponseDto[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-    }> {
+    getAllUsers(@Query() filterDto: GetUserFilterDto): Promise<PaginatedResponse<UserResponseDto>> {
         return this.usersService.getAllUsers(filterDto)
     }
 
@@ -51,8 +46,8 @@ export class UsersController {
 
     @Patch(':id/block')
     @Roles('admin')
-    blockUser(@Param('id') id: string, @Body() blockUserDto: BlockUserDto, @GetUser() user: User): Promise<UserResponseDto> {
-        return this.usersService.blockUser(id, blockUserDto, user)
+    changeStatus(@Param('id') id: string, @Body() blockUserDto: BlockUserDto, @GetUser() user: User): Promise<UserResponseDto> {
+        return this.usersService.changeStatus(id, blockUserDto, user)
     }
 
 
