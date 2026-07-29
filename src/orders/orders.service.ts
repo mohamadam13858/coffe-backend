@@ -230,10 +230,10 @@ export class OrdersService {
         .take(limitNumber)
 
 
-        const [orders , total ] = await query.getManyAndCount()
-
-
+        
+        
         try {
+            const [orders , total ] = await query.getManyAndCount()
 
             return {
                 data: plainToInstance(OrderResponseDto , orders ,{

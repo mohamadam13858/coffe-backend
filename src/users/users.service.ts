@@ -20,48 +20,48 @@ export class UsersService {
     ) { }
 
 
-    async getAllUsers(filterDto: GetUserFilterDto): Promise<PaginatedResponse<UserResponseDto>> {
-        const { search, role, isActive, page = 1, limit = 10 } = filterDto
-        const pageNumber = Math.max(Number(page) || 1, 1);
-        const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100);
-        const query = this.userRepository.createQueryBuilder('user')
+        async getAllUsers(filterDto: GetUserFilterDto): Promise<PaginatedResponse<UserResponseDto>> {
+            const { search, role, isActive, page = 1, limit = 10 } = filterDto
+            const pageNumber = Math.max(Number(page) || 1, 1);
+            const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100);
+            const query = this.userRepository.createQueryBuilder('user')
 
-        if (search?.trim()) {
-            const normalizedSearch = `%${search.trim()}%`
-            query.andWhere(
-                new Brackets((qb) => {
-                    qb.where('user.mobile ILIKE :search', { search: normalizedSearch })
-                        .orWhere('user.firstName ILIKE :search', { search: normalizedSearch })
-                        .orWhere('user.lastName ILIKE :search', { search: normalizedSearch })
-                        .orWhere('user.email ILIKE :search', { search: normalizedSearch });
+            if (search?.trim()) {
+                const normalizedSearch = `%${search.trim()}%`
+                query.andWhere(
+                    new Brackets((qb) => {
+                        qb.where('user.mobile ILIKE :search', { search: normalizedSearch })
+                            .orWhere('user.firstName ILIKE :search', { search: normalizedSearch })
+                            .orWhere('user.lastName ILIKE :search', { search: normalizedSearch })
+                            .orWhere('user.email ILIKE :search', { search: normalizedSearch });
+                    }),
+                );
+            }
+
+
+            if (role) {
+                query.andWhere(`user.role = :role`, { role })
+            }
+
+
+            if (typeof isActive === 'boolean') {
+                query.andWhere('user.isActive = :isActive', { isActive });
+            }
+
+
+            query.orderBy('user.createdAt', 'DESC').addOrderBy('user.id', 'DESC').skip((pageNumber - 1) * limitNumber).take(limitNumber)
+            const [users, total] = await query.getManyAndCount()
+
+            return {
+                data: plainToInstance(UserResponseDto, users, {
+                    excludeExtraneousValues: true
                 }),
-            );
+                total,
+                page: pageNumber,
+                limit: limitNumber,
+                totalPages: Math.ceil(total / limitNumber)
+            }
         }
-
-
-        if (role) {
-            query.andWhere(`user.role = :role`, { role })
-        }
-
-
-        if (typeof isActive === 'boolean') {
-            query.andWhere('user.isActive = :isActive', { isActive });
-        }
-
-
-        query.orderBy('user.createdAt', 'DESC').addOrderBy('user.id', 'DESC').skip((pageNumber - 1) * limitNumber).take(limitNumber)
-        const [users, total] = await query.getManyAndCount()
-
-        return {
-            data: plainToInstance(UserResponseDto, users, {
-                excludeExtraneousValues: true
-            }),
-            total,
-            page: pageNumber,
-            limit: limitNumber,
-            totalPages: Math.ceil(total / limitNumber)
-        }
-    }
 
 
     async getUser(id: string): Promise<UserResponseDto> {

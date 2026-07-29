@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { DataSource, DeepPartial, Repository } from 'typeorm';
+import { Brackets, DataSource, DeepPartial, Repository } from 'typeorm';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
@@ -179,11 +179,14 @@ export class MenuService {
             query.andWhere('product.categoryId = :categoryId', { categoryId })
         }
 
-        if (search) {
+        if (search?.trim()) {
+            const normalizedSearch = `%${search.trim()}%`
             query.andWhere(
-                `(LOWER(product.name) LIKE LOWER(:search) OR LOWER(product.description) LIKE LOWER(:search))`,
-                { search: `%${search}%` }
-            )
+                new Brackets((qb) => {
+                    qb.where('product.name ILIKE :search', { search: normalizedSearch })
+                        .orWhere('product.description ILIKE :search', { search: normalizedSearch })
+                }),
+            );
         }
 
         try {
