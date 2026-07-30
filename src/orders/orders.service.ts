@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { OrderItem } from './entities/order-item.entity';
 import { Product } from 'src/menu/entities/product.entity';
 import { Table } from 'src/table/entities/table.entity';
@@ -13,6 +13,7 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { plainToInstance } from 'class-transformer';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
+import { AddOrderItemDto } from './dto/add-order-item.dto';
 
 @Injectable()
 export class OrdersService {
@@ -170,6 +171,24 @@ export class OrdersService {
 
             }
 
+
+
+            const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+                [OrderStatus.PENDING]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
+                [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
+                [OrderStatus.READY]: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+                [OrderStatus.DELIVERED]: [],
+                [OrderStatus.CANCELLED]: [],
+            };
+
+            const allowed = allowedTransitions[order.status] || [];
+            if (!allowed.includes(status)) {
+                throw new BadRequestException(
+                    `تغییر وضعیت از "${order.status}" به "${status}" مجاز نیست`,
+                );
+            }
+
+
             order.status = status
             const savedOrder = await manager.save(order)
 
@@ -309,6 +328,81 @@ export class OrdersService {
             limit: limitNumber,
             totalPages: Math.ceil(total / limitNumber),
         };
+    }
+
+    async addItem(orderId: string, dto: AddOrderItemDto): Promise<OrderResponseDto> {
+        return this.dataSource.transaction(async (manager) => {
+            const order = await manager.findOne(Order, {
+                where: { id: orderId },
+                relations: { items: true }
+            })
+
+            if (!order) {
+                throw new NotFoundException('سفارش پیدا نشد')
+            }
+
+            if ([OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(order.status)) {
+                throw new BadRequestException('این سفارش قابل ویرایش نیست')
+            }
+            const product = await manager.findOne(Product, {
+                where: { id: dto.productId }
+            })
+
+            if (!product) throw new NotFoundException('محصول پیدا نشد')
+            if (!product.isActive || !product.isAvailable) {
+                throw new BadRequestException('محصول در دسترس نیست')
+            }
+
+            const unitPrice = Number(product.discountPrice ?? product.price)
+            const totalPrice = unitPrice * dto.quantity
+
+            const item = manager.create(OrderItem, {
+                orderId: order.id,
+                productId: product.id,
+                quantity: dto.quantity,
+                unitPrice,
+                totalPrice
+            })
+
+
+            await manager.save(item)
+
+            await this.recalculateOrderTotals(manager, orderId)
+
+            const fullOrder = await manager.findOne(Order, {
+                where: { id: orderId },
+                relations: {
+                    items: { product: true },
+                    table: true
+                }
+            })
+
+
+            return plainToInstance(OrderResponseDto, fullOrder, {
+                excludeExtraneousValues: true
+            })
+        })
+
+
+    }
+
+    private async recalculateOrderTotals(manager: EntityManager, orderId: string): Promise<void> {
+        const result = await manager
+            .createQueryBuilder(OrderItem, 'item')
+            .select(`COALESCE(SUM(item.totalPrice) , 0)`, 'sum')
+            .where('item.orderId = :orderId', { orderId })
+            .getRawOne()
+
+
+        const totalAmount = Number(result.sum) || 0
+
+        const order = await manager.findOne(Order, { where: { id: orderId } })
+        if (!order) return
+
+        order.totalAmount = totalAmount
+        order.finalAmount = totalAmount - Number(order.discountAmount || 0)
+
+        await manager.save(order)
     }
 }
 

@@ -8,6 +8,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Roles } from 'src/auth/roles.decorator';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
+import { AddOrderItemDto } from './dto/add-order-item.dto';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -45,5 +46,10 @@ export class OrdersController {
         @Query() filterDto: GetOrdersFilterDto
     ) {
         return this.ordersService.findMyOrders(user.id, filterDto)
+    }
+
+    @Post(':id/item')
+    addItem(@Param('id') id: string , addOrderItemDto: AddOrderItemDto){
+        return this.ordersService.addItem(id , addOrderItemDto)
     }
 }
