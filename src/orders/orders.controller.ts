@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { OrdersService } from './orders.service';
@@ -33,7 +33,7 @@ export class OrdersController {
     findAll(@Query() filterDto: GetOrdersFilterDto) {
         return this.ordersService.findAll(filterDto)
     }
-    
+
 
     @Get('my')
     findMyOrders(
@@ -54,5 +54,13 @@ export class OrdersController {
     @Post(':id/item')
     addItem(@Param('id') id: string, @Body() addOrderItemDto: AddOrderItemDto) {
         return this.ordersService.addItem(id, addOrderItemDto)
+    }
+
+    
+
+    @Delete(':id/items/:itemId')
+    @Roles('admin')
+    removeItem(@Param('id') id: string, @Param('itemId') itemId: string) {
+        return this.ordersService.removeItem(id, itemId)
     }
 }

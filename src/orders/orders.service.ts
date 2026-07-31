@@ -386,6 +386,58 @@ export class OrdersService {
 
     }
 
+    async removeItem(orderId: string, itemId: string): Promise<OrderResponseDto> {
+        return await this.dataSource.transaction(async (manager) => {
+            const order = await manager.findOne(Order, {
+                where: { id: orderId }
+            })
+
+            if (!order) {
+                throw new NotFoundException('سفارش پیدا نشد')
+            }
+
+
+            if (
+                order.status === OrderStatus.DELIVERED ||
+                order.status === OrderStatus.CANCELLED
+            ) {
+                throw new BadRequestException('این سفازش قابل ویرایش نیست')
+            }
+
+            const item = await manager.findOne(OrderItem, {
+                where: { id: itemId, orderId }
+            })
+
+            if (!item) {
+                throw new NotFoundException('ایتم سفارش پیدا نشد')
+            }
+
+            await manager.remove(item)
+
+
+            await this.recalculateOrderTotals(manager, orderId)
+
+
+            const fullOrder = await manager.findOne(Order, {
+                where: { id: orderId },
+                relations: {
+                    items: {
+                        product: true
+                    }
+
+                    , table: true
+                }
+            })
+
+
+            return plainToInstance(OrderResponseDto, fullOrder, {
+                excludeExtraneousValues: true
+            })
+
+
+        })
+    }
+
     private async recalculateOrderTotals(manager: EntityManager, orderId: string): Promise<void> {
         const result = await manager
             .createQueryBuilder(OrderItem, 'item')
@@ -394,7 +446,7 @@ export class OrdersService {
             .getRawOne()
 
 
-        const totalAmount = Number(result.sum) || 0
+        const totalAmount = Number(result?.sum) || 0
 
         const order = await manager.findOne(Order, { where: { id: orderId } })
         if (!order) return
