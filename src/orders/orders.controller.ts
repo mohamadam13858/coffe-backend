@@ -33,12 +33,7 @@ export class OrdersController {
     findAll(@Query() filterDto: GetOrdersFilterDto) {
         return this.ordersService.findAll(filterDto)
     }
-
-
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.ordersService.findOne(id)
-    }
+    
 
     @Get('my')
     findMyOrders(
@@ -48,9 +43,16 @@ export class OrdersController {
         return this.ordersService.findMyOrders(user.id, filterDto)
     }
 
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.ordersService.findOne(id)
+    }
+
+
+
     @Post(':id/item')
-    addItem(@Param('id') id: string , @Body() addOrderItemDto: AddOrderItemDto){
-        console.log(addOrderItemDto , 'mmmm')
-        return this.ordersService.addItem(id , addOrderItemDto)
+    addItem(@Param('id') id: string, @Body() addOrderItemDto: AddOrderItemDto) {
+        return this.ordersService.addItem(id, addOrderItemDto)
     }
 }
