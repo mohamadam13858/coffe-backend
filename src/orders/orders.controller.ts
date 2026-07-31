@@ -49,7 +49,8 @@ export class OrdersController {
     }
 
     @Post(':id/item')
-    addItem(@Param('id') id: string , addOrderItemDto: AddOrderItemDto){
+    addItem(@Param('id') id: string , @Body() addOrderItemDto: AddOrderItemDto){
+        console.log(addOrderItemDto , 'mmmm')
         return this.ordersService.addItem(id , addOrderItemDto)
     }
 }
