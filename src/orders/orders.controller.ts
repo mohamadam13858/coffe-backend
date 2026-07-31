@@ -9,6 +9,7 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
 import { AddOrderItemDto } from './dto/add-order-item.dto';
+import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -56,7 +57,14 @@ export class OrdersController {
         return this.ordersService.addItem(id, addOrderItemDto)
     }
 
-    
+
+    @Patch(':id/items/:itemId')
+    @Roles('admin')
+    updateItemQuantity(@Param('id') id: string, @Param('itemId') itemId: string, @Body() updateOrderItemDto: UpdateOrderItemDto) {
+        return this.ordersService.updateItemQuantity(id, itemId, updateOrderItemDto)
+    }
+
+
 
     @Delete(':id/items/:itemId')
     @Roles('admin')

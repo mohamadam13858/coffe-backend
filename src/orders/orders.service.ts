@@ -14,6 +14,7 @@ import { plainToInstance } from 'class-transformer';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { GetOrdersFilterDto } from './dto/get-order-filter.dto';
 import { AddOrderItemDto } from './dto/add-order-item.dto';
+import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 
 @Injectable()
 export class OrdersService {
@@ -354,18 +355,33 @@ export class OrdersService {
             }
 
             const unitPrice = Number(product.discountPrice ?? product.price)
-            const totalPrice = unitPrice * dto.quantity
 
-            const item = manager.create(OrderItem, {
-                orderId: order.id,
-                productId: product.id,
-                quantity: dto.quantity,
-                unitPrice,
-                totalPrice
+            const existingItem = await manager.findOne(OrderItem, {
+                where: {
+                    orderId: order.id,
+                    productId: product.id
+                }
             })
 
+            if (existingItem) {
+                existingItem.quantity += dto.quantity
+                existingItem.unitPrice = unitPrice
+                existingItem.totalPrice = unitPrice * existingItem.quantity
+                await manager.save(existingItem)
+            } else {
 
-            await manager.save(item)
+                const item = manager.create(OrderItem, {
+                    orderId: order.id,
+                    productId: product.id,
+                    quantity: dto.quantity,
+                    unitPrice,
+                    totalPrice: unitPrice * dto.quantity
+                })
+
+                await manager.save(item)
+            }
+
+
 
             await this.recalculateOrderTotals(manager, orderId)
 
@@ -435,6 +451,56 @@ export class OrdersService {
             })
 
 
+        })
+    }
+
+
+    async updateItemQuantity(orderId: string, itemId: string, dto: UpdateOrderItemDto): Promise<OrderResponseDto> {
+        return await this.dataSource.transaction(async (manager) => {
+            const order = await manager.findOne(Order, {
+                where: { id: orderId }
+            })
+
+            if (!order) {
+                throw new NotFoundException('سفارش پیدا نشد')
+            }
+
+            if (
+                order.status === OrderStatus.DELIVERED ||
+                order.status === OrderStatus.CANCELLED
+            ) {
+                throw new BadRequestException('این سفارش قابل ویرایش نیست')
+            }
+
+            const item = await manager.findOne(OrderItem, {
+                where: { id: itemId, orderId }
+            })
+
+            if (!item) {
+                throw new NotFoundException('ایتم سفارش پیدا نشد')
+            }
+
+            if (dto.quantity <= 0) {
+                await manager.remove(item)
+            } else {
+                item.quantity = dto.quantity
+                item.totalPrice = Number(item.unitPrice) * dto.quantity
+                await manager.save(item)
+            }
+
+            await this.recalculateOrderTotals(manager , orderId)
+
+            const fullOrder = await manager.findOne(Order , {
+                where: {id: orderId} , 
+                relations: {
+                    items: {product: true} ,
+                    table: true
+                }
+            })
+
+            return plainToInstance(OrderResponseDto , fullOrder , {
+                excludeExtraneousValues: true
+            })
         })
     }
 
