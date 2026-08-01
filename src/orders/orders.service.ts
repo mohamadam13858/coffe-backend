@@ -348,7 +348,7 @@ export class OrdersService {
         return this.dataSource.transaction(async (manager) => {
             const order = await manager.findOne(Order, {
                 where: { id: orderId },
-                relations: { items: true }
+                lock:{mode: 'pessimistic_write'}
             })
 
             if (!order) {
