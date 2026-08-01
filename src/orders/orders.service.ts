@@ -176,6 +176,16 @@ export class OrdersService {
             }
 
 
+            if (order.status === status) {
+                return {
+                    id: order.id,
+                    status: order.id,
+                    tableId: order.tableId,
+                    updatedAt: order.updatedAt
+                }
+            }
+
+
             if (
                 order.status === OrderStatus.DELIVERED ||
                 order.status === OrderStatus.CANCELLED
@@ -265,8 +275,6 @@ export class OrdersService {
 
 
         const query = this.orderRepository.createQueryBuilder('order')
-            .leftJoinAndSelect('order.items', 'items')
-            .leftJoinAndSelect('items.product', 'product')
             .leftJoinAndSelect('order.table', 'table')
 
         if (search?.trim()) {
@@ -344,8 +352,6 @@ export class OrdersService {
 
         const query = this.orderRepository
             .createQueryBuilder('order')
-            .leftJoinAndSelect('order.items', 'items')
-            .leftJoinAndSelect('items.product', 'product')
             .leftJoinAndSelect('order.table', 'table')
             .where('order.userId = :userId', { userId })
 
