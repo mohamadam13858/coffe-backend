@@ -77,6 +77,12 @@ export class OrdersService {
                 if (!product.isAvailable) {
                     throw new BadRequestException('محصول موجود نیست')
                 }
+
+                if (product.stock < item.quantity) {
+                    throw new BadRequestException(
+                        `موجودی محصول کافثی نیست`
+                    )
+                }
                 const unitPrice = Number(product.discountPrice ?? product.price)
                 const totalPrice = unitPrice * item.quantity
                 totalAmount += totalPrice
@@ -89,11 +95,13 @@ export class OrdersService {
                 })
             }
 
+            const discountAmount = 0
+
             const order = manager.create(Order, {
                 status: OrderStatus.PENDING,
                 totalAmount,
-                discountAmount: 0,
-                finalAmount: totalAmount - 0,
+                discountAmount,
+                finalAmount: totalAmount - discountAmount,
                 notes,
                 userId: user.id,
                 tableId
@@ -110,6 +118,11 @@ export class OrdersService {
 
 
             await manager.save(orderItems)
+
+
+            for (const item of items) {
+                await manager.decrement(Product, { id: item.productId }, 'stock', item.quantity)
+            }
 
 
             table.status = TableStatus.OCCUPIED
@@ -190,18 +203,34 @@ export class OrdersService {
             }
 
 
+
             order.status = status
             const savedOrder = await manager.save(order)
+
+            if (status === OrderStatus.CANCELLED) {
+                const orderItems = await manager.find(OrderItem, {
+                    where: { orderId: order.id }
+                })
+
+                for (const item of orderItems) {
+                    await manager.increment(
+                        Product,
+                        { id: item.productId },
+                        'stock',
+                        item.quantity
+                    )
+                }
+            }
 
             if (
                 (status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED) && order.tableId
             ) {
-                const activeOrdersCount = await manager.count(Order , {
+                const activeOrdersCount = await manager.count(Order, {
                     where: {
-                        tableId:  order.tableId  , 
+                        tableId: order.tableId,
                         status: In([
-                            OrderStatus.PENDING , 
-                            OrderStatus.PREPARING, 
+                            OrderStatus.PENDING,
+                            OrderStatus.PREPARING,
                             OrderStatus.READY
                         ])
                     }
@@ -348,7 +377,7 @@ export class OrdersService {
         return this.dataSource.transaction(async (manager) => {
             const order = await manager.findOne(Order, {
                 where: { id: orderId },
-                lock:{mode: 'pessimistic_write'}
+                lock: { mode: 'pessimistic_write' }
             })
 
             if (!order) {
@@ -366,6 +395,11 @@ export class OrdersService {
             if (!product.isActive || !product.isAvailable) {
                 throw new BadRequestException('محصول در دسترس نیست')
             }
+            if (product.stock < dto.quantity) {
+                throw new BadRequestException(
+                    `موجودی محصول "${product.name}" کافی نیست. موجودی فعلی: ${product.stock}`,
+                );
+            }
 
             const unitPrice = Number(product.discountPrice ?? product.price)
 
@@ -375,6 +409,8 @@ export class OrdersService {
                     productId: product.id
                 }
             })
+
+
 
             if (existingItem) {
                 existingItem.quantity += dto.quantity
@@ -394,7 +430,7 @@ export class OrdersService {
                 await manager.save(item)
             }
 
-
+            await manager.decrement(Product, { id: product.id }, 'stock', dto.quantity);
 
             await this.recalculateOrderTotals(manager, orderId)
 
@@ -418,7 +454,8 @@ export class OrdersService {
     async removeItem(orderId: string, itemId: string): Promise<OrderResponseDto> {
         return await this.dataSource.transaction(async (manager) => {
             const order = await manager.findOne(Order, {
-                where: { id: orderId }
+                where: { id: orderId },
+                lock: { mode: 'pessimistic_write' }
             })
 
             if (!order) {
@@ -440,6 +477,13 @@ export class OrdersService {
             if (!item) {
                 throw new NotFoundException('ایتم سفارش پیدا نشد')
             }
+
+            await manager.increment(
+                Product,
+                { id: item.productId },
+                'stock',
+                item.quantity,
+            );
 
             await manager.remove(item)
 
@@ -471,7 +515,8 @@ export class OrdersService {
     async updateItemQuantity(orderId: string, itemId: string, dto: UpdateOrderItemDto): Promise<OrderResponseDto> {
         return await this.dataSource.transaction(async (manager) => {
             const order = await manager.findOne(Order, {
-                where: { id: orderId }
+                where: { id: orderId },
+                lock: { mode: 'pessimistic_write' }
             })
 
             if (!order) {
@@ -494,24 +539,51 @@ export class OrdersService {
             }
 
             if (dto.quantity <= 0) {
+                await manager.increment(
+                    Product,
+                    { id: item.productId },
+                    'stock',
+                    item.quantity
+                )
                 await manager.remove(item)
             } else {
+                const diff = dto.quantity - item.quantity
+                if (diff > 0) {
+                    const product = await manager.findOne(Product, {
+                        where: { id: item.productId },
+                        lock: { mode: 'pessimistic_write' }
+                    })
+
+                    if (!product) {
+                        throw new NotFoundException('محصول پیدا نشد')
+                    }
+
+                    if (product.stock < diff) {
+                        throw new BadRequestException(
+                            `موجودی محصول "${product.name}" کافی نیست. موجودی فعلی: ${product.stock}`,
+                        );
+                    }
+
+                    await manager.decrement(Product, { id: product.id }, 'stock', diff)
+                } else if (diff < 0) {
+                    await manager.increment(Product, { id: item.productId }, 'stock', Math.abs(diff))
+                }
                 item.quantity = dto.quantity
                 item.totalPrice = Number(item.unitPrice) * dto.quantity
                 await manager.save(item)
             }
 
-            await this.recalculateOrderTotals(manager , orderId)
+            await this.recalculateOrderTotals(manager, orderId)
 
-            const fullOrder = await manager.findOne(Order , {
-                where: {id: orderId} , 
+            const fullOrder = await manager.findOne(Order, {
+                where: { id: orderId },
                 relations: {
-                    items: {product: true} ,
+                    items: { product: true },
                     table: true
                 }
             })
 
-            return plainToInstance(OrderResponseDto , fullOrder , {
+            return plainToInstance(OrderResponseDto, fullOrder, {
                 excludeExtraneousValues: true
             })
         })
