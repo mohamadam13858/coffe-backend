@@ -196,9 +196,22 @@ export class OrdersService {
             if (
                 (status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED) && order.tableId
             ) {
-                await manager.update(Table, order.tableId, {
-                    status: TableStatus.AVAILABLE
+                const activeOrdersCount = await manager.count(Order , {
+                    where: {
+                        tableId:  order.tableId  , 
+                        status: In([
+                            OrderStatus.PENDING , 
+                            OrderStatus.PREPARING, 
+                            OrderStatus.READY
+                        ])
+                    }
                 })
+
+                if (activeOrdersCount === 0) {
+                    await manager.update(Table, order.tableId, {
+                        status: TableStatus.AVAILABLE
+                    })
+                }
             }
 
 

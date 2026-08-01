@@ -52,7 +52,7 @@ export class OrdersController {
 
 
 
-    @Post(':id/item')
+    @Post(':id/items')
     addItem(@Param('id') id: string, @Body() addOrderItemDto: AddOrderItemDto) {
         return this.ordersService.addItem(id, addOrderItemDto)
     }
