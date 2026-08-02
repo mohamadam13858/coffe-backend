@@ -179,7 +179,7 @@ export class OrdersService {
             if (order.status === status) {
                 return {
                     id: order.id,
-                    status: order.id,
+                    status: order. status,
                     tableId: order.tableId,
                     updatedAt: order.updatedAt
                 }
