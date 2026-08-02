@@ -17,7 +17,7 @@ export class PaymentsService {
         @InjectRepository(Payment)
         private paymentRepository: Repository<Payment>,
         @InjectRepository(Order)
-        private orderRepository: Repository<Order> , 
+        private orderRepository: Repository<Order>,
         private dataSource: DataSource
     ) { }
 
@@ -80,20 +80,34 @@ export class PaymentsService {
     }
 
 
-    async findByOrder (orderId):Promise<PaymentResponseDto[]> {
-        const order = await this.orderRepository.findOne({where : {id: orderId}})
+    async findByOrder(orderId): Promise<PaymentResponseDto[]> {
+        const order = await this.orderRepository.findOne({ where: { id: orderId } })
 
         if (!order) {
             throw new NotFoundException('سفارش پیدا نشد')
         }
 
         const payments = await this.paymentRepository.find({
-            where: {orderId} , 
-            order: {createdAt: 'DESC'}
+            where: { orderId },
+            order: { createdAt: 'DESC' }
         })
 
 
-        return plainToInstance(PaymentResponseDto , payments , {
+        return plainToInstance(PaymentResponseDto, payments, {
+            excludeExtraneousValues: true
+        })
+    }
+
+
+    async findOne(id: string):Promise<PaymentResponseDto> {
+        const payment = await this.paymentRepository.findOne({ where: { id } })
+
+        if (!payment) {
+            throw new NotFoundException('پرداخت پیدا نشد')
+        }
+
+
+        return plainToInstance(PaymentResponseDto , payment ,{
             excludeExtraneousValues: true
         })
     }
