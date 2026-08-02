@@ -9,12 +9,15 @@ import { OrderStatus } from 'src/orders/order-status.enum';
 import { PaymentStatus } from './payment.enum';
 import { plainToInstance } from 'class-transformer';
 import { PaymentResponseDto } from './dto/payment-response.dto';
+import { OrderResponseDto } from 'src/orders/dto/order-response.dto';
 
 @Injectable()
 export class PaymentsService {
     constructor(
         @InjectRepository(Payment)
         private paymentRepository: Repository<Payment>,
+        @InjectRepository(Order)
+        private orderRepository: Repository<Order> , 
         private dataSource: DataSource
     ) { }
 
@@ -73,6 +76,25 @@ export class PaymentsService {
             return plainToInstance(PaymentResponseDto, saved, {
                 excludeExtraneousValues: true
             })
+        })
+    }
+
+
+    async findByOrder (orderId):Promise<PaymentResponseDto[]> {
+        const order = await this.orderRepository.findOne({where : {id: orderId}})
+
+        if (!order) {
+            throw new NotFoundException('سفارش پیدا نشد')
+        }
+
+        const payments = await this.paymentRepository.find({
+            where: {orderId} , 
+            order: {createdAt: 'DESC'}
+        })
+
+
+        return plainToInstance(PaymentResponseDto , payments , {
+            excludeExtraneousValues: true
         })
     }
 
