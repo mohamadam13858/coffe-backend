@@ -1,4 +1,34 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { PaymentsService } from './payments.service';
+import { Roles } from 'src/auth/roles.decorator';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { GetUser } from 'src/auth/get-user.decorator';
+import { User } from 'src/users/entities/user.entity';
 
 @Controller('payments')
-export class PaymentsController {}
+export class PaymentsController {
+    constructor(
+        private paymentsService: PaymentsService
+    ) { }
+
+
+    @Post()
+    @Roles('admin')
+    createPayment(@Body() dto: CreatePaymentDto, @GetUser() user: User) {
+        return this.paymentsService.createPayment(dto, user)
+    }
+
+
+    @Get('order/:orderId')
+    @Roles('admin')
+    findByOrder(@Param('orderId') orderId: string){
+        return this.paymentsService.findByOrder(orderId)
+    }
+
+
+    @Get(':id')
+    @Roles('admin')
+    findOne(@Param('id') id: string){
+        return this.paymentsService.findOne(id  )
+    }
+}
