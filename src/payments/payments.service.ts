@@ -152,4 +152,38 @@ export class PaymentsService {
         })
     }
 
+
+    async getOrderPaymentSummary(orderId: string) {
+        const order = await this.orderRepository.findOne({where : {id: orderId}})
+
+        if (!order) {
+            throw new NotFoundException('سفارش پیدا نشد')
+        }
+
+        const result = await this.paymentRepository
+        .createQueryBuilder('payment')
+        .select('COALESCE(SUM(payment.amount),0)' , 'sum')
+        .where('payment.orderId = :orderId' , {orderId})
+        .andWhere('payment.status = :status' , {status: PaymentStatus.PAID})
+        .getRawOne()
+
+        const paidAmount = Number(result?.sum) || 0 
+        const finalAmount = Number(order.finalAmount)
+        const remainingAmount = Math.max(finalAmount - paidAmount , 0)
+
+        return {
+            orderId: order.id , 
+            finalAmount , 
+            paidAmount , 
+            remainingAmount , 
+            isFullyPaid: paidAmount >= finalAmount
+        }
+
+    }
+
+
+
+
+
+    
 }

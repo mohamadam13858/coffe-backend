@@ -21,23 +21,30 @@ export class PaymentsController {
     }
 
 
+    @Get('order/:orderId/summary')
+    @Roles('admin')
+    getOrderPaymentSummary(@Param('orderId') orderId: string) {
+        return this.paymentsService.getOrderPaymentSummary(orderId)
+    }
+
+
     @Get('order/:orderId')
     @Roles('admin')
-    findByOrder(@Param('orderId') orderId: string){
+    findByOrder(@Param('orderId') orderId: string) {
         return this.paymentsService.findByOrder(orderId)
     }
 
 
     @Get(':id')
     @Roles('admin')
-    findOne(@Param('id') id: string){
+    findOne(@Param('id') id: string) {
         return this.paymentsService.findOne(id)
     }
 
 
     @Patch(':id/status')
     @Roles('admin')
-    updateStatus(@Param('id') id: string , @Body() dto: UpdatePaymentStatusDto): Promise<PaymentResponseDto>{
-        return this.paymentsService.updateStatus(id , dto)
+    updateStatus(@Param('id') id: string, @Body() dto: UpdatePaymentStatusDto): Promise<PaymentResponseDto> {
+        return this.paymentsService.updateStatus(id, dto)
     }
 }
