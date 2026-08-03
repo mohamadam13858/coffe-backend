@@ -10,6 +10,7 @@ import { PaymentStatus } from './payment.enum';
 import { plainToInstance } from 'class-transformer';
 import { PaymentResponseDto } from './dto/payment-response.dto';
 import { OrderResponseDto } from 'src/orders/dto/order-response.dto';
+import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -99,7 +100,7 @@ export class PaymentsService {
     }
 
 
-    async findOne(id: string):Promise<PaymentResponseDto> {
+    async findOne(id: string): Promise<PaymentResponseDto> {
         const payment = await this.paymentRepository.findOne({ where: { id } })
 
         if (!payment) {
@@ -107,8 +108,47 @@ export class PaymentsService {
         }
 
 
-        return plainToInstance(PaymentResponseDto , payment ,{
+        return plainToInstance(PaymentResponseDto, payment, {
             excludeExtraneousValues: true
+        })
+    }
+
+
+    async updateStatus(id: string, dto: UpdatePaymentStatusDto): Promise<PaymentResponseDto> {
+        return this.dataSource.transaction(async (manager) => {
+            const payment = await manager.findOne(Payment, {
+                where: { id },
+                lock: { mode: 'pessimistic_write' }
+            })
+
+
+            if (!payment) {
+                throw new NotFoundException('پرداخت پیدا نشد')
+            }
+
+            if (payment.status === dto.status) {
+                return plainToInstance(PaymentResponseDto , payment ,{
+                    excludeExtraneousValues: true
+                })
+            }
+
+            const allowed:Record<PaymentStatus , PaymentStatus[]> = {
+               [PaymentStatus.PENDING]: [PaymentStatus.PAID , PaymentStatus.FAILED] , 
+               [PaymentStatus.PAID] : [PaymentStatus.REFUNDED] , 
+               [PaymentStatus.FAILED] : [PaymentStatus.PENDING , PaymentStatus.PAID] , 
+               [PaymentStatus.REFUNDED] : []
+            }
+
+            if (!allowed[payment.status]?.includes(dto.status)) {
+                throw new BadRequestException(`تغییر وضعیت از ${payment.status} به ${dto.status} مجاز نیست`)
+            }
+
+            payment.status = dto.status 
+            const saved = await manager.save(payment)
+
+            return plainToInstance(PaymentResponseDto , saved , {
+                excludeExtraneousValues: true
+            })
         })
     }
 

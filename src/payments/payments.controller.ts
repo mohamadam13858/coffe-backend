@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { Roles } from 'src/auth/roles.decorator';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
+import { PaymentResponseDto } from './dto/payment-response.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -29,6 +31,13 @@ export class PaymentsController {
     @Get(':id')
     @Roles('admin')
     findOne(@Param('id') id: string){
-        return this.paymentsService.findOne(id  )
+        return this.paymentsService.findOne(id)
+    }
+
+
+    @Patch(':id/status')
+    @Roles('admin')
+    updateStatus(@Param('id') id: string , @Body() dto: UpdatePaymentStatusDto): Promise<PaymentResponseDto>{
+        return this.paymentsService.updateStatus(id , dto)
     }
 }
